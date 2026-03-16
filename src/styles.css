@@ -1,0 +1,27 @@
+@import "tailwindcss";
+
+:root {
+  color: #f4f4f5;
+  background:
+    radial-gradient(circle at top left, rgba(94, 164, 255, 0.14), transparent 28%),
+    radial-gradient(circle at top right, rgba(93, 228, 199, 0.12), transparent 24%),
+    linear-gradient(180deg, #0f1117 0%, #111522 56%, #0d1018 100%);
+  font-family: "Space Grotesk", "Segoe UI", sans-serif;
+}
+
+html,
+body,
+#root {
+  min-height: 100%;
+}
+
+body {
+  margin: 0;
+}
+
+button,
+input,
+textarea,
+select {
+  font: inherit;
+}
