@@ -1,7 +1,9 @@
 import { useEffect, useState } from "react";
 import { Field } from "../components/common/Field";
 import { Panel } from "../components/common/Panel";
+import { ComfyUIAdapter } from "../adapters/image/comfyui";
 import { usePresetStore } from "../stores/preset";
+import { useSettingsStore } from "../stores/settings";
 import type { DirectorPreset } from "../types/preset";
 
 type DraftPreset = {
@@ -26,7 +28,7 @@ function toDraft(preset: DirectorPreset): DraftPreset {
     maxTokens: preset.llm.maxTokens,
     systemPrompt: preset.systemPrompt,
     sampler: preset.visualStyle.sampler || "euler",
-    checkpoint: preset.visualStyle.checkpoint || "sd_xl_base_1.0.safetensors",
+    checkpoint: preset.visualStyle.checkpoint || "",
     steps: preset.visualStyle.steps,
     cfgScale: preset.visualStyle.cfgScale,
     width: preset.visualStyle.width,
@@ -42,10 +44,17 @@ export function PresetEditorPage() {
   const updatePreset = usePresetStore((state) => state.update);
   const removePreset = usePresetStore((state) => state.remove);
   const [draft, setDraft] = useState<DraftPreset | null>(null);
+  const [checkpoints, setCheckpoints] = useState<string[]>([]);
+  const comfyuiUrl = useSettingsStore((state) => state.settings.comfyuiUrl);
 
   useEffect(() => {
     setDraft(selected ? toDraft(selected) : null);
   }, [selected]);
+
+  useEffect(() => {
+    const adapter = new ComfyUIAdapter(comfyuiUrl);
+    void adapter.getCheckpoints().then(setCheckpoints);
+  }, [comfyuiUrl]);
 
   const handleSave = async () => {
     if (!selected || !draft) {
@@ -198,12 +207,25 @@ export function PresetEditorPage() {
                 }
               />
             </Field>
-            <Field label="Checkpoint" hint="ComfyUI 中可用的模型文件名">
-              <input
-                className="w-full rounded-2xl border border-stroke bg-bg-primary px-4 py-3 text-sm text-text-primary outline-none transition focus:border-accent-blue"
-                value={draft.checkpoint}
-                onChange={(event) => setDraft({ ...draft, checkpoint: event.target.value })}
-              />
+            <Field label="Checkpoint" hint="从 ComfyUI 自动获取可用模型列表">
+              {checkpoints.length > 0 ? (
+                <select
+                  className="w-full rounded-2xl border border-stroke bg-bg-primary px-4 py-3 text-sm text-text-primary outline-none transition focus:border-accent-blue"
+                  value={draft.checkpoint}
+                  onChange={(event) => setDraft({ ...draft, checkpoint: event.target.value })}
+                >
+                  {checkpoints.map((ckpt) => (
+                    <option key={ckpt} value={ckpt}>{ckpt}</option>
+                  ))}
+                </select>
+              ) : (
+                <input
+                  className="w-full rounded-2xl border border-stroke bg-bg-primary px-4 py-3 text-sm text-text-primary outline-none transition focus:border-accent-blue"
+                  value={draft.checkpoint}
+                  placeholder="无法连接 ComfyUI，请手动输入"
+                  onChange={(event) => setDraft({ ...draft, checkpoint: event.target.value })}
+                />
+              )}
             </Field>
             <Field label="宽度">
               <input

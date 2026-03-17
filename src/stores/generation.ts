@@ -6,7 +6,7 @@ import { useStoryboardStore } from "./storyboard";
 import type { CharacterCard } from "../types/character";
 import type { DirectorPreset } from "../types/preset";
 import type { SceneBook } from "../types/scene";
-import type { Shot } from "../types/storyboard";
+import type { Shot, ShotExecutionRequest, ShotExecutionSnapshot } from "../types/storyboard";
 
 type ShotStatus = {
   status: "idle" | "generating" | "completed" | "error";
@@ -46,6 +46,7 @@ export const useGenerationStore = create<GenerationStore>((set, get) => ({
   shotStatus: {},
   generatingAll: false,
   generateShot: async ({ storyboardId, storyboardUserPrompt, shot, characters, sceneBook, preset }) => {
+    const startedAt = Date.now();
     set((state) => ({
       shotStatus: setShotState(state.shotStatus, shot.id, {
         status: "generating",
@@ -67,6 +68,31 @@ export const useGenerationStore = create<GenerationStore>((set, get) => ({
         `${storyboardUserPrompt}\n${shot.description}`
       );
       const assembled = assembleImagePrompt(shot, characters, activatedScenes, preset);
+      const executionRequest: ShotExecutionRequest = {
+        positive: assembled.positive,
+        negative: assembled.negative,
+        width: assembled.width,
+        height: assembled.height,
+        steps: assembled.steps,
+        cfgScale: assembled.cfgScale,
+        sampler: assembled.sampler,
+        checkpoint: assembled.checkpoint,
+        seed: assembled.seed,
+        workflowTemplateId: "builtin:comfyui-basic-txt2img",
+        workflowTemplateVersion: adapter.version
+      };
+      const runningExecution: ShotExecutionSnapshot = {
+        adapterId: adapter.id,
+        status: "running",
+        startedAt,
+        request: executionRequest
+      };
+
+      await useStoryboardStore.getState().updateShot(storyboardId, shot.id, (currentShot) => ({
+        ...currentShot,
+        execution: runningExecution
+      }));
+
       const result = await adapter.generate({
         prompt: assembled.positive,
         negativePrompt: assembled.negative,
@@ -82,6 +108,7 @@ export const useGenerationStore = create<GenerationStore>((set, get) => ({
       });
 
       const generatedImage = result.images[0];
+      const finishedAt = Date.now();
       await useStoryboardStore.getState().updateShot(storyboardId, shot.id, (currentShot) => ({
         ...currentShot,
         generatedImage,
@@ -98,9 +125,25 @@ export const useGenerationStore = create<GenerationStore>((set, get) => ({
             cfgScale: assembled.cfgScale,
             width: assembled.width,
             height: assembled.height,
-            seed: result.seed ?? assembled.seed
+            seed: result.seed ?? assembled.seed,
+            workflowTemplateId: executionRequest.workflowTemplateId,
+            workflowTemplateVersion: executionRequest.workflowTemplateVersion
           }
-        }
+        },
+        execution: {
+          adapterId: adapter.id,
+          status: "completed",
+          startedAt,
+          finishedAt,
+          request: {
+            ...executionRequest,
+            seed: result.seed ?? executionRequest.seed
+          },
+          result: {
+            imageUrls: result.images,
+            metadata: result.metadata
+          }
+        },
       }));
 
       set((state) => ({
@@ -110,11 +153,31 @@ export const useGenerationStore = create<GenerationStore>((set, get) => ({
         })
       }));
     } catch (error) {
+      const assembled = shot.assembledPrompt;
       const message = error instanceof Error ? error.message : String(error);
+      const failedAt = Date.now();
       await useStoryboardStore.getState().updateShot(storyboardId, shot.id, (currentShot) => ({
         ...currentShot,
         status: "error",
-        error: message
+        error: message,
+        execution: {
+          adapterId: "comfyui",
+          status: "error",
+          startedAt,
+          finishedAt: failedAt,
+          request: currentShot.execution?.request ?? {
+            positive: assembled?.positive ?? "",
+            negative: assembled?.negative ?? "",
+            width: preset.visualStyle.width,
+            height: preset.visualStyle.height,
+            steps: preset.visualStyle.steps,
+            cfgScale: preset.visualStyle.cfgScale,
+            sampler: preset.visualStyle.sampler,
+            checkpoint: preset.visualStyle.checkpoint
+          },
+          result: currentShot.execution?.result,
+          error: message
+        }
       }));
       set((state) => ({
         shotStatus: setShotState(state.shotStatus, shot.id, {

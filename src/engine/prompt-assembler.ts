@@ -223,7 +223,7 @@ export function assembleImagePrompt(
       )
       .find((value) => typeof value === "number"),
     sampler: preset.visualStyle.sampler || "euler",
-    checkpoint: preset.visualStyle.checkpoint || "sd_xl_base_1.0.safetensors",
+    checkpoint: preset.visualStyle.checkpoint,
     width: preset.visualStyle.width,
     height: preset.visualStyle.height,
     steps: preset.visualStyle.steps,

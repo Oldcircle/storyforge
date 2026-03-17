@@ -12,6 +12,33 @@ export interface Storyboard {
   status: "draft" | "generating" | "completed" | "error";
 }
 
+export interface ShotExecutionRequest {
+  positive: string;
+  negative: string;
+  width: number;
+  height: number;
+  steps?: number;
+  cfgScale?: number;
+  sampler?: string;
+  checkpoint?: string;
+  seed?: number;
+  workflowTemplateId?: string;
+  workflowTemplateVersion?: string;
+}
+
+export interface ShotExecutionSnapshot {
+  adapterId: string;
+  status: "pending" | "running" | "completed" | "error";
+  startedAt?: number;
+  finishedAt?: number;
+  request: ShotExecutionRequest;
+  result?: {
+    imageUrls?: string[];
+    metadata?: Record<string, unknown>;
+  };
+  error?: string;
+}
+
 export interface Shot {
   id: string;
   shotNumber: number;
@@ -38,6 +65,7 @@ export interface Shot {
     negative: string;
     parameters: Record<string, unknown>;
   };
+  execution?: ShotExecutionSnapshot;
   status: "pending" | "generating" | "completed" | "error" | "regenerating";
   error?: string;
 }

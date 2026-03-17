@@ -159,7 +159,7 @@ export function createDefaultPreset(): DirectorPreset {
       steps: 30,
       cfgScale: 7,
       sampler: "euler",
-      checkpoint: "sd_xl_base_1.0.safetensors",
+      checkpoint: "",
       width: 1024,
       height: 576
     },

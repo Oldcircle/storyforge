@@ -15,6 +15,54 @@ type ComfyHistoryEntry = {
   outputs?: Record<string, { images?: ComfyHistoryImage[] }>;
 };
 
+function normalizeBaseUrl(url: string): string {
+  return url.replace(/\/$/, "");
+}
+
+export function resolveComfyUIRequestBaseUrl(baseUrl: string): string {
+  const normalized = normalizeBaseUrl(baseUrl);
+  const localDevTargets = new Set(["http://127.0.0.1:8188", "http://localhost:8188"]);
+
+  if (import.meta.env.DEV && localDevTargets.has(normalized)) {
+    return "/comfyui-api";
+  }
+
+  return normalized;
+}
+
+async function readErrorDetail(response: Response): Promise<string> {
+  const bodyText = (await response.text()).trim();
+  if (!bodyText) {
+    return `HTTP ${response.status} ${response.statusText}`.trim();
+  }
+
+  try {
+    const parsed = JSON.parse(bodyText) as {
+      error?: string | { message?: string; type?: string; details?: string };
+      message?: string;
+      node_errors?: unknown;
+    };
+    if (typeof parsed.error === "string") {
+      return parsed.error;
+    }
+    if (parsed.error?.message) {
+      return parsed.error.details
+        ? `${parsed.error.message} (${parsed.error.details})`
+        : parsed.error.message;
+    }
+    if (parsed.message) {
+      return parsed.message;
+    }
+    if (parsed.node_errors) {
+      return JSON.stringify(parsed.node_errors);
+    }
+  } catch {
+    // Keep raw text if it is not JSON.
+  }
+
+  return bodyText;
+}
+
 export class ComfyUIAdapter implements ImageAdapter {
   readonly id = "comfyui";
   readonly name = "ComfyUI";
@@ -37,18 +85,35 @@ export class ComfyUIAdapter implements ImageAdapter {
 
   async healthCheck(): Promise<boolean> {
     try {
-      const response = await fetch(`${this.getBaseUrl()}/system_stats`);
+      const response = await fetch(`${this.getEffectiveUrl()}/system_stats`);
       return response.ok;
     } catch {
       return false;
     }
   }
 
+  /** 查询 ComfyUI 可用的 checkpoint 列表 */
+  async getCheckpoints(): Promise<string[]> {
+    try {
+      const res = await fetch(`${this.getEffectiveUrl()}/object_info/CheckpointLoaderSimple`);
+      if (!res.ok) return [];
+      const data = (await res.json()) as {
+        CheckpointLoaderSimple?: {
+          input?: { required?: { ckpt_name?: [string[]] } };
+        };
+      };
+      return data.CheckpointLoaderSimple?.input?.required?.ckpt_name?.[0] ?? [];
+    } catch {
+      return [];
+    }
+  }
+
   async generate(request: ImageGenerationRequest): Promise<ImageGenerationResult> {
     const seed = request.seed ?? Math.floor(Math.random() * 2 ** 32);
-    const workflow = this.buildWorkflow({ ...request, seed });
+    const checkpoint = await this.resolveCheckpoint(request.checkpoint);
+    const workflow = this.buildWorkflow({ ...request, checkpoint, seed });
 
-    const response = await fetch(`${this.getBaseUrl()}/prompt`, {
+    const response = await fetch(`${this.getEffectiveUrl()}/prompt`, {
       method: "POST",
       headers: {
         "Content-Type": "application/json"
@@ -57,7 +122,8 @@ export class ComfyUIAdapter implements ImageAdapter {
     });
 
     if (!response.ok) {
-      throw new Error(`ComfyUI submit failed: ${await response.text()}`);
+      const detail = await readErrorDetail(response);
+      throw new Error(`ComfyUI submit failed (${checkpoint}): ${detail}`);
     }
 
     const payload = (await response.json()) as { prompt_id?: string; error?: string };
@@ -65,11 +131,29 @@ export class ComfyUIAdapter implements ImageAdapter {
       throw new Error(payload.error || "ComfyUI 没有返回 prompt_id。");
     }
 
-    return this.pollResult(payload.prompt_id, seed, request);
+    return this.pollResult(payload.prompt_id, seed, request, workflow);
   }
 
   private getBaseUrl(): string {
-    return this.baseUrl.replace(/\/$/, "");
+    return normalizeBaseUrl(this.baseUrl);
+  }
+
+  private getEffectiveUrl(): string {
+    return resolveComfyUIRequestBaseUrl(this.baseUrl);
+  }
+
+  private async resolveCheckpoint(checkpoint?: string): Promise<string> {
+    const normalized = checkpoint?.trim();
+    if (normalized) {
+      return normalized;
+    }
+
+    const checkpoints = await this.getCheckpoints();
+    if (checkpoints.length > 0) {
+      return checkpoints[0];
+    }
+
+    throw new Error("ComfyUI 未返回任何可用 checkpoint，请先在 Preset 中选择模型或检查后端配置。");
   }
 
   private buildWorkflow(request: ImageGenerationRequest): Record<string, unknown> {
@@ -80,7 +164,7 @@ export class ComfyUIAdapter implements ImageAdapter {
     nodes[checkpointId] = {
       class_type: "CheckpointLoaderSimple",
       inputs: {
-        ckpt_name: request.checkpoint || "sd_xl_base_1.0.safetensors"
+        ckpt_name: request.checkpoint
       }
     };
 
@@ -174,13 +258,14 @@ export class ComfyUIAdapter implements ImageAdapter {
     promptId: string,
     seed: number,
     request: ImageGenerationRequest,
+    workflow: Record<string, unknown>,
     maxAttempts = 90,
     intervalMs = 2000
   ): Promise<ImageGenerationResult> {
     for (let attempt = 0; attempt < maxAttempts; attempt += 1) {
       await new Promise((resolve) => window.setTimeout(resolve, intervalMs));
 
-      const response = await fetch(`${this.getBaseUrl()}/history/${promptId}`);
+      const response = await fetch(`${this.getEffectiveUrl()}/history/${promptId}`);
       if (!response.ok) {
         continue;
       }
@@ -208,7 +293,12 @@ export class ComfyUIAdapter implements ImageAdapter {
           images,
           seed,
           metadata: {
+            adapterId: this.id,
+            adapterVersion: this.version,
             promptId,
+            workflowTemplateId: "builtin:comfyui-basic-txt2img",
+            workflowTemplateVersion: this.version,
+            submittedWorkflow: workflow,
             referenceImages: request.referenceImages ?? [],
             loras: request.loras ?? []
           }
@@ -226,6 +316,6 @@ export class ComfyUIAdapter implements ImageAdapter {
       type: image.type || "output"
     });
 
-    return `${this.getBaseUrl()}/view?${params.toString()}`;
+    return `${this.getEffectiveUrl()}/view?${params.toString()}`;
   }
 }

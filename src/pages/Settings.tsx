@@ -2,6 +2,7 @@ import { useCallback, useEffect, useState } from "react";
 import { Field } from "../components/common/Field";
 import { Panel } from "../components/common/Panel";
 import { getProvider, LLM_PROVIDERS } from "../data/providers";
+import { resolveComfyUIRequestBaseUrl } from "../adapters/image/comfyui";
 import { OpenAICompatibleAdapter } from "../adapters/llm/openai-compatible";
 import { useSettingsStore } from "../stores/settings";
 import type { GlobalSettings } from "../types/settings";
@@ -79,10 +80,10 @@ export function SettingsPage() {
     setComfyStatus("testing");
     setComfyError("");
     try {
-      const url = draft.comfyuiUrl.replace(/\/$/, "");
+      const url = resolveComfyUIRequestBaseUrl(draft.comfyuiUrl);
       const res = await fetch(`${url}/system_stats`);
       setComfyStatus(res.ok ? "success" : "error");
-      if (!res.ok) setComfyError(`HTTP ${res.status}`);
+      if (!res.ok) setComfyError(`HTTP ${res.status} ${res.statusText}`.trim());
     } catch (err) {
       setComfyStatus("error");
       setComfyError(err instanceof Error ? err.message : String(err));

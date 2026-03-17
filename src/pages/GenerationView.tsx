@@ -21,6 +21,16 @@ function StatCard({ label, value }: { label: string; value: string | number }) {
   );
 }
 
+function formatTimestamp(timestamp?: number): string {
+  if (!timestamp) {
+    return "—";
+  }
+
+  return new Date(timestamp).toLocaleString("zh-CN", {
+    hour12: false
+  });
+}
+
 export function GenerationViewPage({ project }: GenerationViewPageProps) {
   const characters = useCharacterStore((state) => state.characters);
   const sceneBooks = useSceneStore((state) => state.sceneBooks);
@@ -214,6 +224,7 @@ export function GenerationViewPage({ project }: GenerationViewPageProps) {
                 const effectiveStatus = localStatus?.status || (shot.generatedImage ? "completed" : "idle");
                 const errorMessage = localStatus?.error || shot.error;
                 const previewUrl = localStatus?.imageUrl || shot.generatedImage;
+                const execution = shot.execution;
 
                 return (
                   <div key={shot.id} className="rounded-3xl border border-stroke bg-bg-primary/70 p-4">
@@ -282,6 +293,53 @@ export function GenerationViewPage({ project }: GenerationViewPageProps) {
                                 {shot.assembledPrompt.negative}
                               </div>
                             ) : null}
+                          </div>
+                        ) : null}
+
+                        {execution ? (
+                          <div className="rounded-2xl border border-stroke bg-bg-secondary/50 p-3 text-sm text-text-secondary">
+                            <div className="text-xs uppercase tracking-[0.2em] text-text-muted">
+                              最近一次执行快照
+                            </div>
+                            <div className="mt-2 grid gap-2 md:grid-cols-2">
+                              <div>
+                                <span className="font-semibold text-text-primary">Adapter:</span>{" "}
+                                {execution.adapterId}
+                              </div>
+                              <div>
+                                <span className="font-semibold text-text-primary">状态:</span>{" "}
+                                {execution.status}
+                              </div>
+                              <div>
+                                <span className="font-semibold text-text-primary">工作流:</span>{" "}
+                                {execution.request.workflowTemplateId || "内置基础模板"}
+                              </div>
+                              <div>
+                                <span className="font-semibold text-text-primary">参数:</span>{" "}
+                                {execution.request.width}x{execution.request.height} · {execution.request.steps ?? "-"} steps · CFG{" "}
+                                {execution.request.cfgScale ?? "-"}
+                              </div>
+                              <div>
+                                <span className="font-semibold text-text-primary">采样器:</span>{" "}
+                                {execution.request.sampler || "—"}
+                              </div>
+                              <div>
+                                <span className="font-semibold text-text-primary">Checkpoint:</span>{" "}
+                                {execution.request.checkpoint || "—"}
+                              </div>
+                              <div>
+                                <span className="font-semibold text-text-primary">Seed:</span>{" "}
+                                {execution.request.seed ?? "—"}
+                              </div>
+                              <div>
+                                <span className="font-semibold text-text-primary">开始:</span>{" "}
+                                {formatTimestamp(execution.startedAt)}
+                              </div>
+                              <div className="md:col-span-2">
+                                <span className="font-semibold text-text-primary">结束:</span>{" "}
+                                {formatTimestamp(execution.finishedAt)}
+                              </div>
+                            </div>
                           </div>
                         ) : null}
 
