@@ -4,3 +4,15 @@ dist/
 *.local
 .env
 .env.*
+
+# Internal dev docs (not for public repo)
+CLAUDE.md
+AGENTS.md
+STATUS.md
+DESIGN.md
+DEV_GUIDE.md
+PLAN.md
+
+# Test data & backups
+test-data/
+SillyTavern-Backup/
