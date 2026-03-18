@@ -35,6 +35,11 @@ export const DEFAULT_DIRECTOR_SYSTEM_PROMPT = `你是一位经验丰富的短剧
 - 每个镜头的 emotion 必须引用该角色的 expressions 中定义的表情名
 - 每个镜头的 outfit 可选，如果指定则必须引用该角色的 outfits 中定义的服装名
 
+## 重要：description 字段必须用英文
+每个 shot 的 description 字段是给 Stable Diffusion 生图模型看的视觉描述，必须用英文写。
+描述画面内容、构图、光线、氛围，不要用中文。
+例如："A young woman sits alone by a rain-streaked window in a cozy cafe, reading a book under warm yellow lighting"
+
 ## 输出格式
 严格输出 JSON，不要输出其他内容。`;
 

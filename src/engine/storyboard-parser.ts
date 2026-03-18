@@ -24,18 +24,26 @@ function normalizeJsonText(raw: string): string {
 function normalizeShot(rawShot: Record<string, unknown>, shotIndex: number): Shot {
   const rawCharacters = Array.isArray(rawShot.characters) ? rawShot.characters : [];
 
+  // Accept shotNumber / shot_number / shotId (extract trailing digits)
+  const rawShotNum = rawShot.shotNumber ?? rawShot.shot_number;
+  let shotNumber = shotIndex + 1;
+  if (typeof rawShotNum === "number") {
+    shotNumber = rawShotNum;
+  } else if (typeof rawShot.shotId === "string") {
+    const match = rawShot.shotId.match(/(\d+)/);
+    if (match) shotNumber = Number(match[1]);
+  }
+
+  // Accept type / shotType / shot_type
+  const rawType = rawShot.type ?? rawShot.shotType ?? rawShot.shot_type;
+  const shotType = typeof rawType === "string" && VALID_TYPES.has(rawType)
+    ? (rawType as Shot["type"])
+    : "medium";
+
   return {
     id: uuid(),
-    shotNumber:
-      typeof rawShot.shotNumber === "number"
-        ? rawShot.shotNumber
-        : typeof rawShot.shot_number === "number"
-          ? rawShot.shot_number
-          : shotIndex + 1,
-    type:
-      typeof rawShot.type === "string" && VALID_TYPES.has(rawShot.type)
-        ? (rawShot.type as Shot["type"])
-        : "medium",
+    shotNumber,
+    type: shotType,
     description: typeof rawShot.description === "string" ? rawShot.description : "",
     cameraMovement:
       typeof rawShot.cameraMovement === "string" && VALID_CAMERA_MOVEMENTS.has(rawShot.cameraMovement)
@@ -109,29 +117,91 @@ function normalizeVisualIntent(rawShot: Record<string, unknown>): VisualIntent |
   return Object.keys(intent).length > 0 ? intent : undefined;
 }
 
+/**
+ * Extract the shots array and scene-level metadata from a potentially nested LLM response.
+ *
+ * LLMs may return any of these shapes:
+ *   { shots: [...] }                          — flat (expected)
+ *   { scenes: [{ shots: [...] }] }            — wrapped in scenes array
+ *   { scene: { shots: [...] } }               — single scene object
+ *   { storyboard: { shots: [...] } }          — wrapped in storyboard
+ *   { storyboard: { scenes: [{ shots }] } }   — double wrapped
+ */
+function extractShotsAndMeta(parsed: Record<string, unknown>): {
+  shots: unknown[];
+  sceneNumber: number;
+  sceneTitle: string;
+} {
+  // Helper: pull scene-level metadata from an object
+  const metaFrom = (obj: Record<string, unknown>) => ({
+    sceneNumber:
+      typeof obj.sceneNumber === "number" ? obj.sceneNumber
+        : typeof obj.scene_number === "number" ? obj.scene_number
+          : 1,
+    sceneTitle:
+      typeof obj.sceneTitle === "string" ? obj.sceneTitle
+        : typeof obj.scene_title === "string" ? obj.scene_title
+          : typeof obj.sceneDescription === "string" ? obj.sceneDescription
+            : typeof obj.scene_description === "string" ? obj.scene_description
+              : "未命名场景",
+  });
+
+  // Helper: try to get shots from an object
+  const shotsFrom = (obj: unknown): unknown[] | null => {
+    if (!obj || typeof obj !== "object") return null;
+    const o = obj as Record<string, unknown>;
+    if (Array.isArray(o.shots)) return o.shots;
+    return null;
+  };
+
+  // 1. Direct: { shots: [...] }
+  if (Array.isArray(parsed.shots)) {
+    return { shots: parsed.shots, ...metaFrom(parsed) };
+  }
+
+  // 2. Wrapped: { scenes: [{ shots: [...] }] }
+  if (Array.isArray(parsed.scenes) && parsed.scenes.length > 0) {
+    const firstScene = parsed.scenes[0] as Record<string, unknown>;
+    const shots = shotsFrom(firstScene);
+    if (shots) return { shots, ...metaFrom(firstScene) };
+  }
+
+  // 3. Single scene: { scene: { shots: [...] } }
+  if (parsed.scene && typeof parsed.scene === "object") {
+    const scene = parsed.scene as Record<string, unknown>;
+    const shots = shotsFrom(scene);
+    if (shots) return { shots, ...metaFrom(scene) };
+  }
+
+  // 4. Storyboard wrapper: { storyboard: { shots | scenes } }
+  if (parsed.storyboard && typeof parsed.storyboard === "object") {
+    const sb = parsed.storyboard as Record<string, unknown>;
+    const shots = shotsFrom(sb);
+    if (shots) return { shots, ...metaFrom(sb) };
+    if (Array.isArray(sb.scenes) && sb.scenes.length > 0) {
+      const firstScene = sb.scenes[0] as Record<string, unknown>;
+      const innerShots = shotsFrom(firstScene);
+      if (innerShots) return { shots: innerShots, ...metaFrom(firstScene) };
+    }
+  }
+
+  // Fallback: no shots found
+  return { shots: [], sceneNumber: 1, sceneTitle: "未命名场景" };
+}
+
 export function parseStoryboardResponse(
   rawResponse: string,
   params: { projectId: string; userPrompt: string },
 ): Storyboard {
   const normalizedText = normalizeJsonText(rawResponse);
   const parsed = JSON.parse(normalizedText) as Record<string, unknown>;
-  const rawShots = Array.isArray(parsed.shots) ? parsed.shots : [];
+  const { shots: rawShots, sceneNumber, sceneTitle } = extractShotsAndMeta(parsed);
 
   return {
     id: uuid(),
     projectId: params.projectId,
-    sceneNumber:
-      typeof parsed.sceneNumber === "number"
-        ? parsed.sceneNumber
-        : typeof parsed.scene_number === "number"
-          ? parsed.scene_number
-          : 1,
-    sceneTitle:
-      typeof parsed.sceneTitle === "string"
-        ? parsed.sceneTitle
-        : typeof parsed.scene_title === "string"
-          ? parsed.scene_title
-          : "未命名场景",
+    sceneNumber,
+    sceneTitle,
     createdAt: Date.now(),
     updatedAt: Date.now(),
     userPrompt: params.userPrompt,

@@ -181,6 +181,39 @@ export interface RenderPlan {
 // VisualIntent sanitization (for LLM-assisted mode)
 // ---------------------------------------------------------------------------
 
+/**
+ * Returns true if more than half the non-whitespace characters are outside basic ASCII.
+ * Used to filter out Chinese/Japanese text that CLIP can't process.
+ */
+function isPredominantlyNonASCII(text: string): boolean {
+  const chars = text.replace(/\s/g, "");
+  if (chars.length === 0) return false;
+  let nonAscii = 0;
+  for (let i = 0; i < chars.length; i++) {
+    if (chars.charCodeAt(i) > 127) nonAscii++;
+  }
+  return nonAscii / chars.length > 0.5;
+}
+
+/**
+ * Deduplicate comma-separated segments in a prompt string.
+ * Preserves first occurrence order, case-insensitive comparison.
+ */
+function deduplicatePrompt(prompt: string): string {
+  const seen = new Set<string>();
+  return prompt
+    .split(",")
+    .map((s) => s.trim())
+    .filter((s) => {
+      if (!s) return false;
+      const key = s.toLowerCase();
+      if (seen.has(key)) return false;
+      seen.add(key);
+      return true;
+    })
+    .join(", ");
+}
+
 /** Maximum approximate token count for suggestedPositive (rough: 1 token ≈ 4 chars). */
 const MAX_SUGGESTED_POSITIVE_CHARS = 600; // ~150 tokens
 
@@ -373,8 +406,12 @@ export function compileRenderPlan(
   // --- Shot description ---
   // In LLM-assisted mode, visualIntent replaces shot.description to avoid duplication.
   // Fall back to shot.description if visualIntent is absent or empty.
+  // Skip descriptions that are predominantly non-ASCII (Chinese/Japanese) — CLIP can't use them.
   if (!vi) {
-    positiveSegments.push(shot.description);
+    const desc = shot.description.trim();
+    if (desc && !isPredominantlyNonASCII(desc)) {
+      positiveSegments.push(desc);
+    }
   }
 
   // --- Quality suffix from RenderPreset ---
@@ -392,8 +429,8 @@ export function compileRenderPlan(
   const rp = renderPreset?.defaults;
 
   return {
-    positive: positiveSegments.filter(Boolean).join(", "),
-    negative: negativeSegments.filter(Boolean).join(", "),
+    positive: deduplicatePrompt(positiveSegments.filter(Boolean).join(", ")),
+    negative: deduplicatePrompt(negativeSegments.filter(Boolean).join(", ")),
     loras,
     referenceImages,
     seed: shot.characters
