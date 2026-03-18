@@ -60,7 +60,7 @@ export interface ShotExecutionSnapshot {
   error?: string;
 }
 
-export type PromptMode = "rules" | "llm-assisted";
+export type PromptMode = "rules" | "llm-assisted" | "llm-writer";
 
 export interface Shot {
   id: string;

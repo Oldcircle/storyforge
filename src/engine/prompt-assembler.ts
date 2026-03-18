@@ -261,9 +261,10 @@ function deduplicateAgainst(draft: string, existing: string): string {
 /**
  * Compile a RenderPlan for a single shot.
  *
- * Supports two modes controlled by `promptMode`:
+ * Supports three modes controlled by `promptMode`:
  * - "rules" (default): prompt assembled purely from assets (character cards, scene book, RenderPreset)
  * - "llm-assisted": LLM's visualIntent is merged in; assets still provide consistency and safety net
+ * - "llm-writer": LLM writes the entire positive prompt; only quality words and LoRA triggers are added mechanically
  *
  * Uses the RenderPreset for quality words and generation defaults.
  * DirectorPreset is no longer involved in generation parameters.
@@ -274,11 +275,81 @@ export function compileRenderPlan(
   imageEntries: SceneEntry[],
   renderPreset?: RenderPreset,
   promptMode: PromptMode = "rules",
+  llmPositive?: string,
 ): RenderPlan {
   const positiveSegments: string[] = [];
   const negativeSegments: string[] = [];
   const loras: RenderPlan["loras"] = [];
   const referenceImages: string[] = [];
+
+  // ---------------------------------------------------------------------------
+  // LLM-writer mode: LLM already wrote the focused prompt.
+  // We only wrap it with quality prefix/suffix and inject LoRA triggers + negatives.
+  // ---------------------------------------------------------------------------
+  if (promptMode === "llm-writer" && llmPositive) {
+    // Quality prefix
+    if (renderPreset?.positivePrefix.length) {
+      positiveSegments.push(renderPreset.positivePrefix.join(", "));
+    }
+
+    // The LLM-written prompt is the core
+    positiveSegments.push(llmPositive);
+
+    // LoRA trigger words (mechanical — LLM doesn't know about LoRAs)
+    for (const shotCharacter of shot.characters) {
+      const card = characters.find((c) => c.id === shotCharacter.characterId);
+      if (!card) continue;
+      if (card.consistency.lora) {
+        loras.push(card.consistency.lora);
+        if (card.consistency.lora.triggerWord) {
+          positiveSegments.push(card.consistency.lora.triggerWord);
+        }
+      }
+      if (card.appearance.negativePrompt) {
+        negativeSegments.push(card.appearance.negativePrompt);
+      }
+      referenceImages.push(...card.consistency.referenceImages);
+    }
+
+    // Quality suffix
+    if (renderPreset?.positiveSuffix.length) {
+      positiveSegments.push(renderPreset.positiveSuffix.join(", "));
+    }
+
+    // Scene negative prompts still apply
+    for (const scene of imageEntries) {
+      if (scene.content.negativePrompt) {
+        negativeSegments.push(scene.content.negativePrompt);
+      }
+    }
+
+    // Negative from RenderPreset
+    if (renderPreset?.negativePrompt.length) {
+      negativeSegments.push(renderPreset.negativePrompt.join(", "));
+    }
+
+    const rp = renderPreset?.defaults;
+    return {
+      positive: deduplicatePrompt(positiveSegments.filter(Boolean).join(", ")),
+      negative: deduplicatePrompt(negativeSegments.filter(Boolean).join(", ")),
+      loras,
+      referenceImages,
+      seed: shot.characters
+        .map((sc) => characters.find((c) => c.id === sc.characterId)?.consistency.seedBase)
+        .find((v) => typeof v === "number"),
+      checkpoint: rp?.checkpoint || "",
+      sampler: rp?.sampler || "euler",
+      width: rp?.width ?? 1024,
+      height: rp?.height ?? 576,
+      steps: rp?.steps ?? 30,
+      cfgScale: rp?.cfgScale ?? 7,
+      clipSkip: rp?.clipSkip
+    };
+  }
+
+  // ---------------------------------------------------------------------------
+  // rules / llm-assisted modes (existing logic)
+  // ---------------------------------------------------------------------------
 
   const isLLMAssisted = promptMode === "llm-assisted" && shot.visualIntent != null;
   const vi = isLLMAssisted ? shot.visualIntent as VisualIntent : undefined;

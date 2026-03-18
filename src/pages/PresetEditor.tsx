@@ -1,8 +1,10 @@
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { Field } from "../components/common/Field";
 import { Panel } from "../components/common/Panel";
 import { usePresetStore } from "../stores/preset";
 import type { DirectorPreset } from "../types/preset";
+import { db } from "../db";
+import { importDirectorPreset } from "../utils/import-export";
 
 type DraftPreset = {
   name: string;
@@ -31,7 +33,24 @@ export function PresetEditorPage() {
   const selectPreset = usePresetStore((state) => state.select);
   const updatePreset = usePresetStore((state) => state.update);
   const removePreset = usePresetStore((state) => state.remove);
+  const loadAll = usePresetStore((state) => state.loadAll);
   const [draft, setDraft] = useState<DraftPreset | null>(null);
+  const importFileRef = useRef<HTMLInputElement>(null);
+
+  const handleImportJSON = async (event: React.ChangeEvent<HTMLInputElement>) => {
+    const file = event.target.files?.[0];
+    if (!file) return;
+    try {
+      const text = await file.text();
+      const preset = importDirectorPreset(text);
+      await db.presets.add(preset);
+      await loadAll();
+      void selectPreset(preset.id);
+    } catch (error) {
+      window.alert(`导入失败：${error instanceof Error ? error.message : String(error)}`);
+    }
+    if (importFileRef.current) importFileRef.current.value = "";
+  };
 
   useEffect(() => {
     setDraft(selected ? toDraft(selected) : null);
@@ -60,12 +79,27 @@ export function PresetEditorPage() {
         title="导演预设"
         subtitle="控制导演 LLM 的行为：采样参数、系统提示词、分镜规则。生图参数请在渲染预设中配置。"
         actions={
-          <button
-            className="rounded-full bg-accent-blue px-4 py-2 text-sm font-medium text-white transition hover:brightness-110"
-            onClick={() => void createPreset().then(selectPreset)}
-          >
-            新建预设
-          </button>
+          <div className="flex gap-2">
+            <button
+              className="rounded-full border border-stroke px-4 py-2 text-sm text-text-secondary transition hover:text-text-primary"
+              onClick={() => importFileRef.current?.click()}
+            >
+              导入 JSON
+            </button>
+            <input
+              ref={importFileRef}
+              accept=".json"
+              className="hidden"
+              type="file"
+              onChange={(e) => void handleImportJSON(e)}
+            />
+            <button
+              className="rounded-full bg-accent-blue px-4 py-2 text-sm font-medium text-white transition hover:brightness-110"
+              onClick={() => void createPreset().then(selectPreset)}
+            >
+              新建预设
+            </button>
+          </div>
         }
       >
         <div className="space-y-2">

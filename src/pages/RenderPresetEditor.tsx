@@ -1,10 +1,13 @@
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { Field } from "../components/common/Field";
 import { Panel } from "../components/common/Panel";
 import { ComfyUIAdapter } from "../adapters/image/comfyui";
 import { useRenderPresetStore } from "../stores/render-preset";
 import { useSettingsStore } from "../stores/settings";
 import type { RenderPreset } from "../types/render-preset";
+import { DEFAULT_PROMPT_WRITER_PROMPT } from "../data/defaults";
+import { db } from "../db";
+import { importRenderPreset } from "../utils/import-export";
 
 type DraftPreset = {
   name: string;
@@ -22,6 +25,7 @@ type DraftPreset = {
   hiresSteps: number;
   hiresUpscale: number;
   hiresDenoise: number;
+  promptWriterPrompt: string;
 };
 
 function toDraft(preset: RenderPreset): DraftPreset {
@@ -40,7 +44,8 @@ function toDraft(preset: RenderPreset): DraftPreset {
     hiresEnabled: preset.hires?.enabled ?? false,
     hiresSteps: preset.hires?.steps ?? 40,
     hiresUpscale: preset.hires?.upscale ?? 1.5,
-    hiresDenoise: preset.hires?.denoise ?? 0.4
+    hiresDenoise: preset.hires?.denoise ?? 0.4,
+    promptWriterPrompt: preset.promptWriterPrompt ?? DEFAULT_PROMPT_WRITER_PROMPT
   };
 }
 
@@ -59,6 +64,22 @@ export function RenderPresetEditorPage() {
   const [draft, setDraft] = useState<DraftPreset | null>(null);
   const [checkpoints, setCheckpoints] = useState<string[]>([]);
   const comfyuiUrl = useSettingsStore((s) => s.settings.comfyuiUrl);
+  const importFileRef = useRef<HTMLInputElement>(null);
+
+  const handleImportJSON = async (event: React.ChangeEvent<HTMLInputElement>) => {
+    const file = event.target.files?.[0];
+    if (!file) return;
+    try {
+      const text = await file.text();
+      const preset = importRenderPreset(text);
+      await db.renderPresets.add(preset);
+      await loadAll();
+      void selectPreset(preset.id);
+    } catch (error) {
+      window.alert(`导入失败：${error instanceof Error ? error.message : String(error)}`);
+    }
+    if (importFileRef.current) importFileRef.current.value = "";
+  };
 
   useEffect(() => {
     void loadAll();
@@ -94,7 +115,8 @@ export function RenderPresetEditorPage() {
         steps: draft.hiresSteps,
         upscale: draft.hiresUpscale,
         denoise: draft.hiresDenoise
-      }
+      },
+      promptWriterPrompt: draft.promptWriterPrompt.trim() || undefined
     });
   };
 
@@ -104,12 +126,27 @@ export function RenderPresetEditorPage() {
         title="渲染预设"
         subtitle="控制「怎么炼图」：质量词包、负面词、默认参数。与导演预设（怎么拍故事）分离。"
         actions={
-          <button
-            className="rounded-full bg-accent-blue px-4 py-2 text-sm font-medium text-white transition hover:brightness-110"
-            onClick={() => void createPreset().then(selectPreset)}
-          >
-            新建渲染预设
-          </button>
+          <div className="flex gap-2">
+            <button
+              className="rounded-full border border-stroke px-4 py-2 text-sm text-text-secondary transition hover:text-text-primary"
+              onClick={() => importFileRef.current?.click()}
+            >
+              导入 JSON
+            </button>
+            <input
+              ref={importFileRef}
+              accept=".json"
+              className="hidden"
+              type="file"
+              onChange={(e) => void handleImportJSON(e)}
+            />
+            <button
+              className="rounded-full bg-accent-blue px-4 py-2 text-sm font-medium text-white transition hover:brightness-110"
+              onClick={() => void createPreset().then(selectPreset)}
+            >
+              新建渲染预设
+            </button>
+          </div>
         }
       >
         <div className="space-y-2">
@@ -317,6 +354,28 @@ export function RenderPresetEditorPage() {
                   </Field>
                 </div>
               )}
+            </div>
+
+            <div className="rounded-3xl border border-stroke bg-bg-primary/40 p-4 space-y-4">
+              <h3 className="text-sm font-semibold text-text-primary">LLM Prompt Writer 系统提示</h3>
+              <p className="text-xs text-text-muted">
+                当 Prompt 模式为「LLM 写手」时，此提示控制 LLM 如何将角色/场景素材写成聚焦的 SD prompt。
+                留空则使用内置默认提示。不同画风需要不同的写法策略。
+              </p>
+              <Field label="系统提示" hint="英文。控制 LLM 输出的 prompt 风格、长度、角色描述策略">
+                <textarea
+                  className="min-h-64 w-full rounded-2xl border border-stroke bg-bg-secondary px-4 py-3 font-mono text-xs text-text-primary outline-none transition focus:border-accent-blue"
+                  placeholder={DEFAULT_PROMPT_WRITER_PROMPT}
+                  value={draft.promptWriterPrompt}
+                  onChange={(e) => setDraft({ ...draft, promptWriterPrompt: e.target.value })}
+                />
+              </Field>
+              <button
+                className="rounded-full border border-stroke px-3 py-1.5 text-xs text-text-secondary transition hover:text-text-primary"
+                onClick={() => setDraft({ ...draft, promptWriterPrompt: DEFAULT_PROMPT_WRITER_PROMPT })}
+              >
+                恢复默认
+              </button>
             </div>
           </div>
         )}

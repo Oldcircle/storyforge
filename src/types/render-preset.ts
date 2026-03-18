@@ -42,4 +42,12 @@ export interface RenderPreset {
   adetailer?: {
     enabled: boolean;
   };
+
+  /**
+   * Custom system prompt for the LLM Prompt Writer (llm-writer mode).
+   * Controls how the LLM converts structured assets into a focused SD prompt.
+   * When empty/undefined, falls back to the built-in default.
+   * Different art styles (chibi, anime, realistic) need different writing strategies.
+   */
+  promptWriterPrompt?: string;
 }

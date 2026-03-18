@@ -1,4 +1,5 @@
-import { useEffect, useMemo } from "react";
+import { useCallback, useEffect, useMemo, useState } from "react";
+import { ImageLightbox } from "../components/common/ImageLightbox";
 import { Panel } from "../components/common/Panel";
 import { useCharacterStore } from "../stores/character";
 import { useGenerationStore } from "../stores/generation";
@@ -116,6 +117,12 @@ export function GenerationViewPage({ project }: GenerationViewPageProps) {
     return status?.status === "completed" || Boolean(shot.generatedImage);
   }).length;
 
+  const generatingCount = selectedShots.filter((shot) => shotStatus[shot.id]?.status === "generating").length;
+
+  const [lightboxSrc, setLightboxSrc] = useState<string | null>(null);
+  const openLightbox = useCallback((src: string) => setLightboxSrc(src), []);
+  const closeLightbox = useCallback(() => setLightboxSrc(null), []);
+
   if (!project) {
     return (
       <Panel title="未选择项目" subtitle="先从 Dashboard 进入一个项目工作区。">
@@ -144,7 +151,9 @@ export function GenerationViewPage({ project }: GenerationViewPageProps) {
             }
             onClick={() => void generateAllShots(generateAllInputs)}
           >
-            {generatingAll ? "批量生成中..." : "全部生成"}
+            {generatingAll
+              ? `生成中 ${completedCount + generatingCount}/${selectedShots.length}`
+              : `全部生成 (${selectedShots.length} 镜头)`}
           </button>
         }
       >
@@ -253,6 +262,27 @@ export function GenerationViewPage({ project }: GenerationViewPageProps) {
             </div>
           ) : (
             <div className="space-y-4">
+              {selectedShots.length > 1 && (
+                <div className="flex items-center justify-between rounded-2xl border border-accent-blue/30 bg-accent-blue/5 p-4">
+                  <div className="text-sm text-text-secondary">
+                    {generatingAll
+                      ? <span className="font-semibold text-accent-blue">正在批量生成 {completedCount + generatingCount}/{selectedShots.length}...</span>
+                      : <span>共 {selectedShots.length} 个镜头，已完成 {completedCount} 个</span>}
+                  </div>
+                  <button
+                    className="rounded-full bg-accent-blue px-5 py-2.5 text-sm font-semibold text-white transition hover:brightness-110 disabled:cursor-not-allowed disabled:opacity-50"
+                    disabled={
+                      generatingAll ||
+                      loading ||
+                      !preset ||
+                      !settings.comfyuiUrl.trim()
+                    }
+                    onClick={() => void generateAllShots(generateAllInputs)}
+                  >
+                    {generatingAll ? "生成中..." : "一键全部生成"}
+                  </button>
+                </div>
+              )}
               {selectedShots.map((shot) => {
                 const localStatus = shotStatus[shot.id];
                 const effectiveStatus = localStatus?.status || (shot.generatedImage ? "completed" : "idle");
@@ -268,7 +298,8 @@ export function GenerationViewPage({ project }: GenerationViewPageProps) {
                           <img
                             src={previewUrl}
                             alt={`Shot ${shot.shotNumber}`}
-                            className="h-full min-h-56 w-full object-cover"
+                            className="h-full min-h-56 w-full cursor-pointer object-contain transition hover:opacity-90"
+                            onClick={() => openLightbox(previewUrl)}
                           />
                         ) : (
                           <div className="flex min-h-56 items-center justify-center p-6 text-center text-sm text-text-muted">
@@ -424,6 +455,10 @@ export function GenerationViewPage({ project }: GenerationViewPageProps) {
           )}
         </Panel>
       </div>
+
+      {lightboxSrc && (
+        <ImageLightbox src={lightboxSrc} alt="Generated image" onClose={closeLightbox} />
+      )}
     </div>
   );
 }

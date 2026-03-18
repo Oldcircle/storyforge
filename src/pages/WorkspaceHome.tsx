@@ -181,16 +181,20 @@ export function WorkspaceHomePage({ project }: WorkspaceHomePageProps) {
                 className="w-full rounded-2xl border border-stroke bg-bg-primary px-4 py-3 text-sm text-text-primary outline-none transition focus:border-accent-blue"
                 value={project.settings.promptMode ?? "rules"}
                 onChange={(event) =>
-                  void setPromptMode(project.id, event.target.value as "rules" | "llm-assisted")
+                  void setPromptMode(project.id, event.target.value as "rules" | "llm-assisted" | "llm-writer")
                 }
               >
                 <option value="rules">规则模式 — 角色卡 + 场景书 + 渲染预设纯编译</option>
                 <option value="llm-assisted">LLM 增强 — 导演 LLM 生成视觉草案，程序收口</option>
+                <option value="llm-writer">LLM 写手 — LLM 直接撰写聚焦的 SD prompt（推荐）</option>
               </select>
               <p className="mt-1 text-xs text-text-muted">
-                {(project.settings.promptMode ?? "rules") === "rules"
-                  ? "Prompt 完全由资产层机械编译，完全可复现。"
-                  : "LLM 在生成分镜时额外输出 visualIntent，与资产层合并后生图。角色一致性词强制注入不受影响。"}
+                {(() => {
+                  const mode = project.settings.promptMode ?? "rules";
+                  if (mode === "llm-writer") return "每个镜头生图前，LLM 根据素材写一段 60-80 词的聚焦 prompt，质量词和负面词由渲染预设包装。出图质量最好，每镜头多一次 LLM 调用。";
+                  if (mode === "llm-assisted") return "LLM 在生成分镜时额外输出 visualIntent，与资产层合并后生图。角色一致性词强制注入不受影响。";
+                  return "Prompt 完全由资产层机械编译，完全可复现。";
+                })()}
               </p>
             </Field>
 
@@ -221,7 +225,12 @@ export function WorkspaceHomePage({ project }: WorkspaceHomePageProps) {
                 <p>
                   Prompt 模式：
                   {" "}
-                  {(project.settings.promptMode ?? "rules") === "rules" ? "规则" : "LLM 增强"}
+                  {(() => {
+                    const mode = project.settings.promptMode ?? "rules";
+                    if (mode === "llm-writer") return "LLM 写手";
+                    if (mode === "llm-assisted") return "LLM 增强";
+                    return "规则";
+                  })()}
                 </p>
               </div>
             </div>

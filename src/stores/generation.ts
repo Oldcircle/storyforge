@@ -1,6 +1,7 @@
 import { create } from "zustand";
 import { ComfyUIAdapter } from "../adapters/image/comfyui";
 import { compileRenderPlan, getActivatedSceneEntries, getImageEntries } from "../engine/prompt-assembler";
+import { writeImagePrompt } from "../engine/prompt-writer";
 import { useSettingsStore } from "./settings";
 import { useStoryboardStore } from "./storyboard";
 import type { CharacterCard } from "../types/character";
@@ -83,7 +84,21 @@ export const useGenerationStore = create<GenerationStore>((set, get) => ({
         `${storyboardUserPrompt}\n${shot.description}`
       );
       const imageEntries = getImageEntries(activatedScenes);
-      const assembled = compileRenderPlan(shot, characters, imageEntries, renderPreset, promptMode);
+
+      // LLM Prompt Writer: call LLM to write a focused prompt before compiling
+      let llmPositive: string | undefined;
+      if (promptMode === "llm-writer") {
+        const writerResult = await writeImagePrompt({
+          shot,
+          characters,
+          imageEntries,
+          settings,
+          promptWriterPrompt: renderPreset?.promptWriterPrompt,
+        });
+        llmPositive = writerResult.positive;
+      }
+
+      const assembled = compileRenderPlan(shot, characters, imageEntries, renderPreset, promptMode, llmPositive);
       const workflowTemplateId = workflowTemplate?.id ?? "builtin:comfyui-basic-txt2img";
       const workflowTemplateVersion = workflowTemplate
         ? String(workflowTemplate.updatedAt)
