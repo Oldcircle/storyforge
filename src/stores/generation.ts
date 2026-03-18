@@ -83,7 +83,7 @@ export const useGenerationStore = create<GenerationStore>((set, get) => ({
         `${storyboardUserPrompt}\n${shot.description}`
       );
       const imageEntries = getImageEntries(activatedScenes);
-      const assembled = compileRenderPlan(shot, characters, imageEntries, preset, renderPreset, promptMode);
+      const assembled = compileRenderPlan(shot, characters, imageEntries, renderPreset, promptMode);
       const workflowTemplateId = workflowTemplate?.id ?? "builtin:comfyui-basic-txt2img";
       const workflowTemplateVersion = workflowTemplate
         ? String(workflowTemplate.updatedAt)
@@ -193,12 +193,12 @@ export const useGenerationStore = create<GenerationStore>((set, get) => ({
           request: currentShot.execution?.request ?? {
             positive: assembled?.positive ?? "",
             negative: assembled?.negative ?? "",
-            width: preset.visualStyle.width,
-            height: preset.visualStyle.height,
-            steps: preset.visualStyle.steps,
-            cfgScale: preset.visualStyle.cfgScale,
-            sampler: preset.visualStyle.sampler,
-            checkpoint: renderPreset?.defaults.checkpoint || preset.visualStyle.checkpoint,
+            width: renderPreset?.defaults.width ?? 1024,
+            height: renderPreset?.defaults.height ?? 576,
+            steps: renderPreset?.defaults.steps ?? 30,
+            cfgScale: renderPreset?.defaults.cfgScale ?? 7,
+            sampler: renderPreset?.defaults.sampler ?? "euler",
+            checkpoint: renderPreset?.defaults.checkpoint ?? "",
             clipSkip: renderPreset?.defaults.clipSkip,
             workflowTemplateId: workflowTemplate?.id ?? "builtin:comfyui-basic-txt2img",
             workflowTemplateVersion: workflowTemplate

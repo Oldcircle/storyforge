@@ -232,14 +232,13 @@ function deduplicateAgainst(draft: string, existing: string): string {
  * - "rules" (default): prompt assembled purely from assets (character cards, scene book, RenderPreset)
  * - "llm-assisted": LLM's visualIntent is merged in; assets still provide consistency and safety net
  *
- * Uses the RenderPreset (quality words, defaults) when available.
- * Falls back to DirectorPreset.visualStyle for backward compatibility.
+ * Uses the RenderPreset for quality words and generation defaults.
+ * DirectorPreset is no longer involved in generation parameters.
  */
 export function compileRenderPlan(
   shot: Shot,
   characters: CharacterCard[],
   imageEntries: SceneEntry[],
-  preset: DirectorPreset,
   renderPreset?: RenderPreset,
   promptMode: PromptMode = "rules",
 ): RenderPlan {
@@ -388,9 +387,9 @@ export function compileRenderPlan(
     negativeSegments.push(renderPreset.negativePrompt.join(", "));
   }
 
-  // Use RenderPreset defaults when available, else fall back to DirectorPreset.visualStyle.
+  // All generation parameters come from RenderPreset.
+  // DirectorPreset no longer carries generation params (visualStyle is deprecated).
   const rp = renderPreset?.defaults;
-  const vs = preset.visualStyle;
 
   return {
     positive: positiveSegments.filter(Boolean).join(", "),
@@ -400,12 +399,12 @@ export function compileRenderPlan(
     seed: shot.characters
       .map((sc) => characters.find((c) => c.id === sc.characterId)?.consistency.seedBase)
       .find((v) => typeof v === "number"),
-    checkpoint: rp?.checkpoint || vs.checkpoint,
-    sampler: rp?.sampler || vs.sampler || "euler",
-    width: rp?.width ?? vs.width,
-    height: rp?.height ?? vs.height,
-    steps: rp?.steps ?? vs.steps,
-    cfgScale: rp?.cfgScale ?? vs.cfgScale,
+    checkpoint: rp?.checkpoint || "",
+    sampler: rp?.sampler || "euler",
+    width: rp?.width ?? 1024,
+    height: rp?.height ?? 576,
+    steps: rp?.steps ?? 30,
+    cfgScale: rp?.cfgScale ?? 7,
     clipSkip: rp?.clipSkip
   };
 }
@@ -420,10 +419,9 @@ export function assembleImagePrompt(
   shot: Shot,
   characters: CharacterCard[],
   activatedScenes: SceneEntry[],
-  preset: DirectorPreset,
   renderPreset?: RenderPreset,
   promptMode: PromptMode = "rules",
 ): AssembledImagePrompt {
   const imageEntries = getImageEntries(activatedScenes);
-  return compileRenderPlan(shot, characters, imageEntries, preset, renderPreset, promptMode);
+  return compileRenderPlan(shot, characters, imageEntries, renderPreset, promptMode);
 }

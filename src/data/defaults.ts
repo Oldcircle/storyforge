@@ -158,15 +158,7 @@ export function createDefaultPreset(): DirectorPreset {
       null,
       2,
     ),
-    visualStyle: {
-      defaultImageAdapter: "comfyui",
-      steps: 30,
-      cfgScale: 7,
-      sampler: "euler",
-      checkpoint: "",
-      width: 1024,
-      height: 576
-    },
+    defaultImageAdapter: "comfyui",
     promptTemplates: {
       characterTemplate: "{{character.appearance.basePrompt}}",
       sceneTemplate: "{{scene.content.environmentPrompt}}",
