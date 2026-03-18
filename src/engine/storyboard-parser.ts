@@ -1,5 +1,5 @@
 import { v4 as uuid } from "uuid";
-import type { Shot, Storyboard } from "../types/storyboard";
+import type { Shot, Storyboard, VisualIntent } from "../types/storyboard";
 
 const VALID_TYPES = new Set(["establish", "wide", "medium", "close", "detail"]);
 const VALID_CAMERA_MOVEMENTS = new Set([
@@ -70,11 +70,43 @@ function normalizeShot(rawShot: Record<string, unknown>, shotIndex: number): Sho
         };
       })
       .filter((character) => character.characterId),
+    visualIntent: normalizeVisualIntent(rawShot),
     dialogue: typeof rawShot.dialogue === "string" ? rawShot.dialogue : undefined,
     narration: typeof rawShot.narration === "string" ? rawShot.narration : undefined,
     sfx: typeof rawShot.sfx === "string" ? rawShot.sfx : undefined,
     status: "pending"
   };
+}
+
+function normalizeVisualIntent(rawShot: Record<string, unknown>): VisualIntent | undefined {
+  // Accept both camelCase and snake_case from LLM output
+  const raw =
+    (rawShot.visualIntent as Record<string, unknown> | undefined) ??
+    (rawShot.visual_intent as Record<string, unknown> | undefined);
+
+  if (!raw || typeof raw !== "object") return undefined;
+
+  const intent: VisualIntent = {};
+  if (typeof raw.subject === "string" && raw.subject.trim()) {
+    intent.subject = raw.subject.trim();
+  }
+  if (typeof raw.composition === "string" && raw.composition.trim()) {
+    intent.composition = raw.composition.trim();
+  }
+  if (typeof raw.atmosphere === "string" && raw.atmosphere.trim()) {
+    intent.atmosphere = raw.atmosphere.trim();
+  }
+  const sugPos = raw.suggestedPositive ?? raw.suggested_positive;
+  if (typeof sugPos === "string" && sugPos.trim()) {
+    intent.suggestedPositive = sugPos.trim();
+  }
+  const sugNeg = raw.suggestedNegative ?? raw.suggested_negative;
+  if (typeof sugNeg === "string" && sugNeg.trim()) {
+    intent.suggestedNegative = sugNeg.trim();
+  }
+
+  // Only return if at least one field is populated
+  return Object.keys(intent).length > 0 ? intent : undefined;
 }
 
 export function parseStoryboardResponse(

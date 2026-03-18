@@ -3,9 +3,11 @@ import { Panel } from "../components/common/Panel";
 import { useCharacterStore } from "../stores/character";
 import { useGenerationStore } from "../stores/generation";
 import { usePresetStore } from "../stores/preset";
+import { useRenderPresetStore } from "../stores/render-preset";
 import { useSceneStore } from "../stores/scene";
 import { useSettingsStore } from "../stores/settings";
 import { useStoryboardStore } from "../stores/storyboard";
+import { useWorkflowTemplateStore } from "../stores/workflow-template";
 import type { Project } from "../types/project";
 
 interface GenerationViewPageProps {
@@ -35,6 +37,7 @@ export function GenerationViewPage({ project }: GenerationViewPageProps) {
   const characters = useCharacterStore((state) => state.characters);
   const sceneBooks = useSceneStore((state) => state.sceneBooks);
   const presets = usePresetStore((state) => state.presets);
+  const renderPresets = useRenderPresetStore((state) => state.renderPresets);
   const settings = useSettingsStore((state) => state.settings);
   const storyboards = useStoryboardStore((state) => state.storyboards);
   const selected = useStoryboardStore((state) => state.selected);
@@ -42,6 +45,7 @@ export function GenerationViewPage({ project }: GenerationViewPageProps) {
   const error = useStoryboardStore((state) => state.error);
   const loadByProject = useStoryboardStore((state) => state.loadByProject);
   const selectStoryboard = useStoryboardStore((state) => state.select);
+  const workflowTemplates = useWorkflowTemplateStore((state) => state.workflowTemplates);
   const shotStatus = useGenerationStore((state) => state.shotStatus);
   const generatingAll = useGenerationStore((state) => state.generatingAll);
   const generateShot = useGenerationStore((state) => state.generateShot);
@@ -74,6 +78,21 @@ export function GenerationViewPage({ project }: GenerationViewPageProps) {
     return presets.find((item) => item.id === project.presetId);
   }, [presets, project]);
 
+  const renderPreset = useMemo(() => {
+    if (!project?.renderPresetId) {
+      return undefined;
+    }
+    return renderPresets.find((item) => item.id === project.renderPresetId);
+  }, [project, renderPresets]);
+
+  const workflowTemplate = useMemo(() => {
+    if (!project?.workflowTemplateId) {
+      return undefined;
+    }
+    return workflowTemplates.find((item) => item.id === project.workflowTemplateId);
+  }, [project, workflowTemplates]);
+
+  const promptMode = project?.settings.promptMode ?? "rules";
   const selectedShots = selected?.shots ?? [];
   const generateAllInputs = useMemo(
     () =>
@@ -84,10 +103,13 @@ export function GenerationViewPage({ project }: GenerationViewPageProps) {
             shot,
             characters: linkedCharacters,
             sceneBook,
-            preset
+            preset,
+            renderPreset,
+            workflowTemplate,
+            promptMode
           }))
         : [],
-    [linkedCharacters, preset, sceneBook, selected, selectedShots],
+    [linkedCharacters, preset, promptMode, renderPreset, sceneBook, selected, selectedShots, workflowTemplate],
   );
   const completedCount = selectedShots.filter((shot) => {
     const status = shotStatus[shot.id];
@@ -152,6 +174,12 @@ export function GenerationViewPage({ project }: GenerationViewPageProps) {
             </div>
           ) : null}
 
+          {!renderPreset ? (
+            <div className="rounded-2xl border border-amber-300/30 bg-amber-300/10 p-4 text-sm text-text-secondary">
+              当前项目没有绑定渲染预设，将回退到导演预设里的基础采样参数，质量词包和负面词包不会生效。
+            </div>
+          ) : null}
+
           {linkedCharacters.length === 0 ? (
             <div className="rounded-2xl border border-amber-300/30 bg-amber-300/10 p-4 text-sm text-text-secondary">
               当前项目没有关联角色卡，生成出的画面会缺少角色一致性锚点。
@@ -161,6 +189,12 @@ export function GenerationViewPage({ project }: GenerationViewPageProps) {
           {!settings.comfyuiUrl.trim() ? (
             <div className="rounded-2xl border border-amber-300/30 bg-amber-300/10 p-4 text-sm text-text-secondary">
               还没有配置 ComfyUI 地址，请先去 Settings 填写并测试连接。
+            </div>
+          ) : null}
+
+          {!workflowTemplate ? (
+            <div className="rounded-2xl border border-sky-400/20 bg-sky-400/10 p-4 text-sm text-text-secondary">
+              当前项目没有显式绑定工作流模板，将回退到内置基础 txt2img 模板。
             </div>
           ) : null}
 
@@ -324,6 +358,10 @@ export function GenerationViewPage({ project }: GenerationViewPageProps) {
                                 {execution.request.sampler || "—"}
                               </div>
                               <div>
+                                <span className="font-semibold text-text-primary">CLIP Skip:</span>{" "}
+                                {execution.request.clipSkip ?? "—"}
+                              </div>
+                              <div>
                                 <span className="font-semibold text-text-primary">Checkpoint:</span>{" "}
                                 {execution.request.checkpoint || "—"}
                               </div>
@@ -363,7 +401,10 @@ export function GenerationViewPage({ project }: GenerationViewPageProps) {
                                 shot,
                                 characters: linkedCharacters,
                                 sceneBook,
-                                preset
+                                preset,
+                                renderPreset,
+                                workflowTemplate,
+                                promptMode
                               });
                             }}
                           >

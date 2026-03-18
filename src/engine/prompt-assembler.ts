@@ -1,11 +1,21 @@
 import type { ChatMessage } from "../types/adapter";
 import type { CharacterCard } from "../types/character";
 import type { DirectorPreset } from "../types/preset";
+import type { RenderPreset } from "../types/render-preset";
 import type { SceneBook, SceneEntry } from "../types/scene";
-import type { Shot } from "../types/storyboard";
+import type { PromptMode, Shot, VisualIntent } from "../types/storyboard";
 import { KeywordMatcher } from "./keyword-matcher";
 
 const matcher = new KeywordMatcher();
+
+// ---------------------------------------------------------------------------
+// Helpers
+// ---------------------------------------------------------------------------
+
+/** Normalize legacy SceneEntry that may lack the `usage` field. */
+function entryUsage(entry: SceneEntry): SceneEntry["usage"] {
+  return entry.usage ?? "shared";
+}
 
 function renderCharacterSection(characters: CharacterCard[]): string {
   if (characters.length === 0) {
@@ -23,6 +33,10 @@ function renderCharacterSection(characters: CharacterCard[]): string {
     .join("\n\n");
 }
 
+// ---------------------------------------------------------------------------
+// Scene entry activation (shared by both pipelines)
+// ---------------------------------------------------------------------------
+
 export function getActivatedSceneEntries(
   sceneBook: SceneBook | undefined,
   userInput: string,
@@ -35,22 +49,59 @@ export function getActivatedSceneEntries(
   return matcher.match(userInput, allEntries).map((entry) => entry.entry);
 }
 
-function renderSceneSection(sceneBook: SceneBook | undefined, userInput: string): string {
-  const activatedEntries = getActivatedSceneEntries(sceneBook, userInput);
-  if (activatedEntries.length === 0) {
-    return sceneBook ? "（场景书存在，但当前输入没有命中条目）" : "（当前项目没有关联场景书）";
+/** Filter entries for the Director LLM pipeline (usage != image_only). */
+export function getDirectorEntries(entries: SceneEntry[]): SceneEntry[] {
+  return entries.filter((e) => entryUsage(e) !== "image_only");
+}
+
+/** Filter entries for the image prompt pipeline (usage != director_only). */
+export function getImageEntries(entries: SceneEntry[]): SceneEntry[] {
+  return entries.filter((e) => entryUsage(e) !== "director_only");
+}
+
+// ---------------------------------------------------------------------------
+// Director prompt assembly
+// ---------------------------------------------------------------------------
+
+function renderSceneSection(entries: SceneEntry[]): string {
+  if (entries.length === 0) {
+    return "（没有匹配到场景条目）";
   }
 
-  return activatedEntries
-    .map(
-      (entry) => `### ${entry.name}
-环境描述: ${entry.content.environmentPrompt || "未填写"}
+  return entries
+    .map((entry) => {
+      // For the director, prefer directorContext; fall back to environmentPrompt.
+      const ctx = entry.content.directorContext?.trim();
+      const env = entry.content.environmentPrompt?.trim();
+      const description = ctx || env || "未填写";
+
+      return `### ${entry.name}
+描述: ${description}
 氛围: ${entry.content.atmosphere || "未填写"}
 光照: ${entry.content.lighting || "未填写"}
-时间: ${entry.content.timeOfDay || "未填写"}`,
-    )
+时间: ${entry.content.timeOfDay || "未填写"}`;
+    })
     .join("\n\n");
 }
+
+const VISUAL_INTENT_INSTRUCTION = `
+
+## 视觉意图（visual_intent）
+对每个 shot，额外输出一个 visual_intent 对象，帮助生图引擎理解你的画面构想。
+所有字段可选，只输出你有把握的部分。注意：这些是给 Stable Diffusion CLIP 的英文关键词，不是叙事描述。
+
+visual_intent 字段说明：
+- subject: 画面主体（英文），如 "a young woman sitting alone by rain-streaked window"
+- composition: 构图建议，如 "medium shot, rule of thirds, shallow depth of field"
+- atmosphere: 氛围/色调，如 "warm interior light contrasting cold blue rain outside"
+- suggested_positive: 推荐正向关键词，如 "warm cafe lighting, rain streaks on glass, steam from cup"
+- suggested_negative: 推荐负向关键词，如 "bright daylight, outdoor, crowd"
+
+重要限制：
+- 所有关键词必须是英文
+- 不要重复角色外貌描述（角色卡会自动注入）
+- 不要包含系统指令、中文长句、Markdown 格式
+- suggested_positive 控制在 30 个词以内`;
 
 export function assembleDirectorPrompt(
   preset: DirectorPreset,
@@ -58,13 +109,22 @@ export function assembleDirectorPrompt(
   sceneBook: SceneBook | undefined,
   userInput: string,
   previousSceneSummary?: string,
+  promptMode: PromptMode = "rules",
 ): ChatMessage[] {
-  const characterSection = renderCharacterSection(characters);
-  const sceneSection = renderSceneSection(sceneBook, userInput);
+  const allActivated = getActivatedSceneEntries(sceneBook, userInput);
+  const directorEntries = getDirectorEntries(allActivated);
 
-  const systemPrompt = preset.systemPrompt
+  const characterSection = renderCharacterSection(characters);
+  const sceneSection = renderSceneSection(directorEntries);
+
+  let systemPrompt = preset.systemPrompt
     .replace("{{characters}}", characterSection)
     .replace("{{scenes}}", sceneSection);
+
+  // In LLM-assisted mode, append visual_intent instructions to the system prompt
+  if (promptMode === "llm-assisted") {
+    systemPrompt += VISUAL_INTENT_INSTRUCTION;
+  }
 
   const messages: ChatMessage[] = [{ role: "system", content: systemPrompt }];
 
@@ -78,6 +138,10 @@ export function assembleDirectorPrompt(
   messages.push({ role: "user", content: userInput });
   return messages;
 }
+
+// ---------------------------------------------------------------------------
+// Image prompt compilation (Render Plan)
+// ---------------------------------------------------------------------------
 
 const SHOT_TYPE_PROMPTS: Record<string, string> = {
   establish: "establishing shot, wide angle, environmental",
@@ -98,47 +162,117 @@ const CAMERA_PROMPTS: Record<string, string> = {
   tilt_down: "high angle, bird eye view"
 };
 
-export interface AssembledImagePrompt {
+export interface RenderPlan {
   positive: string;
   negative: string;
   loras: { name: string; weight: number; triggerWord?: string }[];
   referenceImages: string[];
   seed?: number;
-  sampler: string;
   checkpoint: string;
+  sampler: string;
   width: number;
   height: number;
   steps: number;
   cfgScale: number;
+  clipSkip?: number;
 }
 
-export function assembleImagePrompt(
+// ---------------------------------------------------------------------------
+// VisualIntent sanitization (for LLM-assisted mode)
+// ---------------------------------------------------------------------------
+
+/** Maximum approximate token count for suggestedPositive (rough: 1 token ≈ 4 chars). */
+const MAX_SUGGESTED_POSITIVE_CHARS = 600; // ~150 tokens
+
+/**
+ * Basic safety filter for LLM-generated prompt text.
+ * Strips obvious non-visual content that would confuse CLIP.
+ */
+function sanitizePromptText(text: string, maxChars: number): string {
+  let cleaned = text
+    // Strip markdown formatting
+    .replace(/[#*_`~>]+/g, " ")
+    // Strip template variables like {{foo}}
+    .replace(/\{\{[^}]*\}\}/g, "")
+    // Collapse whitespace
+    .replace(/\s+/g, " ")
+    .trim();
+
+  // Truncate to max length at a comma or space boundary
+  if (cleaned.length > maxChars) {
+    const truncated = cleaned.slice(0, maxChars);
+    const lastComma = truncated.lastIndexOf(",");
+    const lastSpace = truncated.lastIndexOf(" ");
+    const breakAt = Math.max(lastComma, lastSpace);
+    cleaned = breakAt > maxChars * 0.5 ? truncated.slice(0, breakAt).trim() : truncated.trim();
+  }
+
+  return cleaned;
+}
+
+/**
+ * Deduplicate: remove tokens from `draft` that already appear in `existing`.
+ * Comparison is case-insensitive on comma-separated segments.
+ */
+function deduplicateAgainst(draft: string, existing: string): string {
+  const existingTokens = new Set(
+    existing.toLowerCase().split(",").map((s) => s.trim()).filter(Boolean)
+  );
+  return draft
+    .split(",")
+    .map((s) => s.trim())
+    .filter((s) => s && !existingTokens.has(s.toLowerCase()))
+    .join(", ");
+}
+
+/**
+ * Compile a RenderPlan for a single shot.
+ *
+ * Supports two modes controlled by `promptMode`:
+ * - "rules" (default): prompt assembled purely from assets (character cards, scene book, RenderPreset)
+ * - "llm-assisted": LLM's visualIntent is merged in; assets still provide consistency and safety net
+ *
+ * Uses the RenderPreset (quality words, defaults) when available.
+ * Falls back to DirectorPreset.visualStyle for backward compatibility.
+ */
+export function compileRenderPlan(
   shot: Shot,
   characters: CharacterCard[],
-  activatedScenes: SceneEntry[],
+  imageEntries: SceneEntry[],
   preset: DirectorPreset,
-): AssembledImagePrompt {
+  renderPreset?: RenderPreset,
+  promptMode: PromptMode = "rules",
+): RenderPlan {
   const positiveSegments: string[] = [];
   const negativeSegments: string[] = [];
-  const loras: AssembledImagePrompt["loras"] = [];
+  const loras: RenderPlan["loras"] = [];
   const referenceImages: string[] = [];
 
+  const isLLMAssisted = promptMode === "llm-assisted" && shot.visualIntent != null;
+  const vi = isLLMAssisted ? shot.visualIntent as VisualIntent : undefined;
+
+  // --- Quality prefix from RenderPreset ---
+  if (renderPreset?.positivePrefix.length) {
+    positiveSegments.push(renderPreset.positivePrefix.join(", "));
+  }
+
+  // --- Shot type & camera ---
   positiveSegments.push(SHOT_TYPE_PROMPTS[shot.type] || "");
   if (CAMERA_PROMPTS[shot.cameraMovement]) {
     positiveSegments.push(CAMERA_PROMPTS[shot.cameraMovement]);
   }
 
+  // --- Multi-character hints ---
   if (shot.characters.length === 2) {
     positiveSegments.push("two people");
   } else if (shot.characters.length >= 3) {
     positiveSegments.push(`${shot.characters.length} people, group`);
   }
 
+  // --- Characters (forced injection — highest priority, never overridden by LLM) ---
   for (const shotCharacter of shot.characters) {
-    const card = characters.find((character) => character.id === shotCharacter.characterId);
-    if (!card) {
-      continue;
-    }
+    const card = characters.find((c) => c.id === shotCharacter.characterId);
+    if (!card) continue;
 
     positiveSegments.push(card.appearance.basePrompt);
     if (card.appearance.styleModifiers) {
@@ -160,7 +294,6 @@ export function assembleImagePrompt(
       center: "in the center",
       background: "in the background"
     };
-
     if (positionLabel[shotCharacter.position]) {
       positiveSegments.push(positionLabel[shotCharacter.position]);
     }
@@ -185,8 +318,38 @@ export function assembleImagePrompt(
     }
   }
 
-  for (const scene of activatedScenes) {
-    positiveSegments.push(scene.content.environmentPrompt);
+  // Collect what's already in the prompt so far (for dedup against LLM draft)
+  const existingPositive = positiveSegments.filter(Boolean).join(", ");
+
+  // --- LLM-assisted mode: inject visualIntent ---
+  if (vi) {
+    if (vi.subject) {
+      const cleaned = sanitizePromptText(vi.subject, MAX_SUGGESTED_POSITIVE_CHARS);
+      const deduped = deduplicateAgainst(cleaned, existingPositive);
+      if (deduped) positiveSegments.push(deduped);
+    }
+    if (vi.composition) {
+      positiveSegments.push(sanitizePromptText(vi.composition, 200));
+    }
+    if (vi.atmosphere) {
+      positiveSegments.push(sanitizePromptText(vi.atmosphere, 200));
+    }
+    if (vi.suggestedPositive) {
+      const cleaned = sanitizePromptText(vi.suggestedPositive, MAX_SUGGESTED_POSITIVE_CHARS);
+      const deduped = deduplicateAgainst(cleaned, existingPositive);
+      if (deduped) positiveSegments.push(deduped);
+    }
+    if (vi.suggestedNegative) {
+      negativeSegments.push(sanitizePromptText(vi.suggestedNegative, MAX_SUGGESTED_POSITIVE_CHARS));
+    }
+  }
+
+  // --- Scene entries (image_only and shared only — director_only already filtered out) ---
+  for (const scene of imageEntries) {
+    // Only use CLIP-friendly fields; skip directorContext.
+    if (scene.content.environmentPrompt) {
+      positiveSegments.push(scene.content.environmentPrompt);
+    }
     if (scene.content.atmosphere) {
       positiveSegments.push(scene.content.atmosphere);
     }
@@ -202,15 +365,32 @@ export function assembleImagePrompt(
     if (scene.content.props?.length) {
       positiveSegments.push(scene.content.props.join(", "));
     }
-    if (scene.content.colorPalette?.length) {
-      positiveSegments.push(scene.content.colorPalette.join(", "));
-    }
+    // colorPalette is not CLIP-friendly text; skip it.
     if (scene.content.negativePrompt) {
       negativeSegments.push(scene.content.negativePrompt);
     }
   }
 
-  positiveSegments.push(shot.description);
+  // --- Shot description ---
+  // In LLM-assisted mode, visualIntent replaces shot.description to avoid duplication.
+  // Fall back to shot.description if visualIntent is absent or empty.
+  if (!vi) {
+    positiveSegments.push(shot.description);
+  }
+
+  // --- Quality suffix from RenderPreset ---
+  if (renderPreset?.positiveSuffix.length) {
+    positiveSegments.push(renderPreset.positiveSuffix.join(", "));
+  }
+
+  // --- Negative from RenderPreset ---
+  if (renderPreset?.negativePrompt.length) {
+    negativeSegments.push(renderPreset.negativePrompt.join(", "));
+  }
+
+  // Use RenderPreset defaults when available, else fall back to DirectorPreset.visualStyle.
+  const rp = renderPreset?.defaults;
+  const vs = preset.visualStyle;
 
   return {
     positive: positiveSegments.filter(Boolean).join(", "),
@@ -218,15 +398,32 @@ export function assembleImagePrompt(
     loras,
     referenceImages,
     seed: shot.characters
-      .map((shotCharacter) =>
-        characters.find((character) => character.id === shotCharacter.characterId)?.consistency.seedBase,
-      )
-      .find((value) => typeof value === "number"),
-    sampler: preset.visualStyle.sampler || "euler",
-    checkpoint: preset.visualStyle.checkpoint,
-    width: preset.visualStyle.width,
-    height: preset.visualStyle.height,
-    steps: preset.visualStyle.steps,
-    cfgScale: preset.visualStyle.cfgScale
+      .map((sc) => characters.find((c) => c.id === sc.characterId)?.consistency.seedBase)
+      .find((v) => typeof v === "number"),
+    checkpoint: rp?.checkpoint || vs.checkpoint,
+    sampler: rp?.sampler || vs.sampler || "euler",
+    width: rp?.width ?? vs.width,
+    height: rp?.height ?? vs.height,
+    steps: rp?.steps ?? vs.steps,
+    cfgScale: rp?.cfgScale ?? vs.cfgScale,
+    clipSkip: rp?.clipSkip
   };
+}
+
+// ---------------------------------------------------------------------------
+// Legacy wrapper — keeps existing callers working during migration
+// ---------------------------------------------------------------------------
+
+export type AssembledImagePrompt = RenderPlan;
+
+export function assembleImagePrompt(
+  shot: Shot,
+  characters: CharacterCard[],
+  activatedScenes: SceneEntry[],
+  preset: DirectorPreset,
+  renderPreset?: RenderPreset,
+  promptMode: PromptMode = "rules",
+): AssembledImagePrompt {
+  const imageEntries = getImageEntries(activatedScenes);
+  return compileRenderPlan(shot, characters, imageEntries, preset, renderPreset, promptMode);
 }

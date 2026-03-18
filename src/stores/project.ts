@@ -2,6 +2,7 @@ import { create } from "zustand";
 import { db } from "../db";
 import { createProject } from "../data/defaults";
 import type { Project } from "../types/project";
+import type { PromptMode } from "../types/storyboard";
 
 type ProjectStore = {
   projects: Project[];
@@ -17,6 +18,9 @@ type ProjectStore = {
   removeCharacter: (projectId: string, characterId: string) => Promise<void>;
   setSceneBook: (projectId: string, sceneBookId: string | undefined) => Promise<void>;
   setPreset: (projectId: string, presetId: string | undefined) => Promise<void>;
+  setRenderPreset: (projectId: string, renderPresetId: string | undefined) => Promise<void>;
+  setWorkflowTemplate: (projectId: string, workflowTemplateId: string | undefined) => Promise<void>;
+  setPromptMode: (projectId: string, promptMode: PromptMode) => Promise<void>;
 };
 
 async function fetchProjects(): Promise<Project[]> {
@@ -88,5 +92,18 @@ export const useProjectStore = create<ProjectStore>((set, get) => ({
   },
   setPreset: async (projectId, presetId) => {
     await get().update(projectId, { presetId });
+  },
+  setRenderPreset: async (projectId, renderPresetId) => {
+    await get().update(projectId, { renderPresetId });
+  },
+  setWorkflowTemplate: async (projectId, workflowTemplateId) => {
+    await get().update(projectId, { workflowTemplateId });
+  },
+  setPromptMode: async (projectId, promptMode) => {
+    const project = await db.projects.get(projectId);
+    if (!project) return;
+    await get().update(projectId, {
+      settings: { ...project.settings, promptMode }
+    });
   }
 }));

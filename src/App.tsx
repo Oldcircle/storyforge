@@ -5,6 +5,7 @@ import { CharacterEditorPage } from "./pages/CharacterEditor";
 import { DashboardPage } from "./pages/Dashboard";
 import { GenerationViewPage } from "./pages/GenerationView";
 import { PresetEditorPage } from "./pages/PresetEditor";
+import { RenderPresetEditorPage } from "./pages/RenderPresetEditor";
 import { SceneEditorPage } from "./pages/SceneEditor";
 import { SettingsPage } from "./pages/Settings";
 import { StoryboardViewPage } from "./pages/StoryboardView";
@@ -12,12 +13,15 @@ import { WorkspaceHomePage } from "./pages/WorkspaceHome";
 import { useCharacterStore } from "./stores/character";
 import { usePresetStore } from "./stores/preset";
 import { useProjectStore } from "./stores/project";
+import { useRenderPresetStore } from "./stores/render-preset";
 import { useSceneStore } from "./stores/scene";
+import { useWorkflowTemplateStore } from "./stores/workflow-template";
 
 type Route =
   | { page: "dashboard" }
   | { page: "settings" }
   | { page: "presets" }
+  | { page: "render-presets" }
   | { page: "project"; projectId: string; tab: "home" | "characters" | "scenes" | "storyboard" | "generation" };
 
 function parseHash(): Route {
@@ -27,6 +31,9 @@ function parseHash(): Route {
   }
   if (hash === "presets") {
     return { page: "presets" };
+  }
+  if (hash === "render-presets") {
+    return { page: "render-presets" };
   }
   if (hash.startsWith("project/")) {
     const [, projectId, tab] = hash.split("/");
@@ -58,10 +65,19 @@ export default function App() {
   const loadCharacters = useCharacterStore((state) => state.loadAll);
   const loadSceneBooks = useSceneStore((state) => state.loadAll);
   const loadPresets = usePresetStore((state) => state.loadAll);
+  const loadRenderPresets = useRenderPresetStore((state) => state.loadAll);
+  const loadWorkflowTemplates = useWorkflowTemplateStore((state) => state.loadAll);
 
   useEffect(() => {
-    void Promise.all([loadProjects(), loadCharacters(), loadSceneBooks(), loadPresets()]);
-  }, [loadCharacters, loadPresets, loadProjects, loadSceneBooks]);
+    void Promise.all([
+      loadProjects(),
+      loadCharacters(),
+      loadSceneBooks(),
+      loadPresets(),
+      loadRenderPresets(),
+      loadWorkflowTemplates()
+    ]);
+  }, [loadCharacters, loadPresets, loadRenderPresets, loadProjects, loadSceneBooks, loadWorkflowTemplates]);
 
   useEffect(() => {
     const onHashChange = () => setRoute(parseHash());
@@ -113,6 +129,7 @@ export default function App() {
         disabled: !inProject
       },
       { key: "presets", label: "导演预设", hash: "presets" },
+      { key: "render-presets", label: "渲染预设", hash: "render-presets" },
       { key: "settings", label: "设置", hash: "settings" }
     ];
   }, [activeProject?.id]);
@@ -122,6 +139,8 @@ export default function App() {
       ? route.tab
       : route.page === "presets"
         ? "presets"
+      : route.page === "render-presets"
+        ? "render-presets"
       : route.page === "settings"
           ? "settings"
           : route.page === "dashboard" && activeProject
@@ -148,6 +167,10 @@ export default function App() {
 
     if (route.page === "presets") {
       return <PresetEditorPage />;
+    }
+
+    if (route.page === "render-presets") {
+      return <RenderPresetEditorPage />;
     }
 
     if (route.page === "project") {

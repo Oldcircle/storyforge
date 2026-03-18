@@ -2,7 +2,7 @@ import { useEffect, useMemo, useRef, useState } from "react";
 import { Field } from "../components/common/Field";
 import { Panel } from "../components/common/Panel";
 import { useSceneStore } from "../stores/scene";
-import type { SceneBook, SceneEntry } from "../types/scene";
+import type { SceneBook, SceneEntry, SceneEntryUsage } from "../types/scene";
 import { downloadTextFile, exportSceneBook, importSceneBook } from "../utils/import-export";
 import { importSceneBookFromSTWorld } from "../utils/import-st";
 
@@ -12,8 +12,10 @@ type DraftBook = {
   entries: Array<{
     id: string;
     name: string;
+    usage: SceneEntryUsage;
     keywords: string;
     secondaryKeywords: string;
+    directorContext: string;
     environmentPrompt: string;
     lighting: string;
     atmosphere: string;
@@ -32,8 +34,10 @@ function toDraft(book: SceneBook): DraftBook {
     entries: mergedEntries.map((entry) => ({
       id: entry.id,
       name: entry.name,
+      usage: entry.usage ?? "shared",
       keywords: entry.keywords.join(", "),
       secondaryKeywords: (entry.secondaryKeywords ?? []).join(", "),
+      directorContext: entry.content.directorContext ?? "",
       environmentPrompt: entry.content.environmentPrompt,
       lighting: entry.content.lighting ?? "",
       atmosphere: entry.content.atmosphere ?? "",
@@ -50,6 +54,7 @@ function toEntry(entry: DraftBook["entries"][number]): SceneEntry {
     id: entry.id,
     name: entry.name,
     enabled: entry.enabled,
+    usage: entry.usage,
     keywords: entry.keywords
       .split(",")
       .map((keyword) => keyword.trim())
@@ -61,6 +66,7 @@ function toEntry(entry: DraftBook["entries"][number]): SceneEntry {
     useRegex: entry.useRegex,
     alwaysActive: entry.alwaysActive,
     content: {
+      directorContext: entry.directorContext,
       environmentPrompt: entry.environmentPrompt,
       negativePrompt: "",
       props: [],
@@ -341,6 +347,26 @@ export function SceneEditorPage() {
                         }
                       />
                     </Field>
+                    <Field label="用途" hint="控制此条目注入到哪条管线">
+                      <select
+                        className="w-full rounded-2xl border border-stroke bg-bg-secondary px-4 py-3 text-sm text-text-primary outline-none transition focus:border-accent-blue"
+                        value={entry.usage}
+                        onChange={(event) =>
+                          setDraft({
+                            ...draft,
+                            entries: draft.entries.map((item) =>
+                              item.id === entry.id
+                                ? { ...item, usage: event.target.value as SceneEntryUsage }
+                                : item,
+                            )
+                          })
+                        }
+                      >
+                        <option value="shared">共享（导演+生图）</option>
+                        <option value="director_only">仅导演（不进 CLIP）</option>
+                        <option value="image_only">仅生图（不给 LLM）</option>
+                      </select>
+                    </Field>
                     <Field label="优先级">
                       <input
                         className="w-full rounded-2xl border border-stroke bg-bg-secondary px-4 py-3 text-sm text-text-primary outline-none transition focus:border-accent-blue"
@@ -394,24 +420,48 @@ export function SceneEditorPage() {
                       />
                       正则匹配
                     </label>
-                    <div className="md:col-span-2">
-                      <Field label="环境 Prompt">
-                        <textarea
-                          className="min-h-24 w-full rounded-2xl border border-stroke bg-bg-secondary px-4 py-3 text-sm text-text-primary outline-none transition focus:border-accent-blue"
-                          value={entry.environmentPrompt}
-                          onChange={(event) =>
-                            setDraft({
-                              ...draft,
-                              entries: draft.entries.map((item) =>
-                                item.id === entry.id
-                                  ? { ...item, environmentPrompt: event.target.value }
-                                  : item,
-                              )
-                            })
-                          }
-                        />
-                      </Field>
-                    </div>
+                    {entry.usage !== "image_only" && (
+                      <div className="md:col-span-2">
+                        <Field label="导演上下文" hint="仅给导演 LLM 的叙事信息（剧情暗线、关系设定、世界规则），不会进入 CLIP">
+                          <textarea
+                            className="min-h-16 w-full rounded-2xl border border-stroke bg-bg-secondary px-4 py-3 text-sm text-text-primary outline-none transition focus:border-accent-blue"
+                            placeholder="例：这是适合旧情重逢、暧昧和压抑情绪爆发的封闭空间。"
+                            value={entry.directorContext}
+                            onChange={(event) =>
+                              setDraft({
+                                ...draft,
+                                entries: draft.entries.map((item) =>
+                                  item.id === entry.id
+                                    ? { ...item, directorContext: event.target.value }
+                                    : item,
+                                )
+                              })
+                            }
+                          />
+                        </Field>
+                      </div>
+                    )}
+                    {entry.usage !== "director_only" && (
+                      <div className="md:col-span-2">
+                        <Field label="环境 Prompt" hint="CLIP 友好的视觉描述（英文关键词），直接注入生图 prompt">
+                          <textarea
+                            className="min-h-24 w-full rounded-2xl border border-stroke bg-bg-secondary px-4 py-3 text-sm text-text-primary outline-none transition focus:border-accent-blue"
+                            placeholder="例：cozy coffee shop interior, warm yellow lighting, rain on windows"
+                            value={entry.environmentPrompt}
+                            onChange={(event) =>
+                              setDraft({
+                                ...draft,
+                                entries: draft.entries.map((item) =>
+                                  item.id === entry.id
+                                    ? { ...item, environmentPrompt: event.target.value }
+                                    : item,
+                                )
+                              })
+                            }
+                          />
+                        </Field>
+                      </div>
+                    )}
                     <Field label="光照">
                       <input
                         className="w-full rounded-2xl border border-stroke bg-bg-secondary px-4 py-3 text-sm text-text-primary outline-none transition focus:border-accent-blue"

@@ -1,3 +1,5 @@
+import type { WorkflowTemplate } from "./workflow-template";
+
 export type AdapterType = "llm" | "image";
 
 export interface ChatMessage {
@@ -57,6 +59,9 @@ export interface ImageGenerationRequest {
   cfgScale?: number;
   sampler?: string;
   checkpoint?: string;
+  clipSkip?: number;
+  workflowTemplate?: WorkflowTemplate;
+  workflowTemplateVersion?: string;
 }
 
 export interface ImageGenerationResult {

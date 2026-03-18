@@ -73,11 +73,13 @@ function mapWorldEntryToSceneEntry(entry: STWorldEntry, index: number): SceneEnt
     id: `st-entry-${entry.uid ?? index}`,
     name: entry.comment?.trim() || entry.key?.[0] || `ST 条目 ${index + 1}`,
     enabled: !entry.disable,
+    usage: "shared",
     keywords: entry.key ?? [],
     secondaryKeywords: entry.keysecondary ?? [],
     useRegex: Boolean(entry.use_regex),
     alwaysActive: Boolean(entry.constant),
     content: {
+      directorContext: "",
       environmentPrompt: entry.content ?? "",
       negativePrompt: "",
       props: [],

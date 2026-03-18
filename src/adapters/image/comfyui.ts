@@ -1,4 +1,5 @@
 import type { ImageAdapter, ImageGenerationRequest, ImageGenerationResult } from "../../types/adapter";
+import type { WorkflowSlot, WorkflowTemplate } from "../../types/workflow-template";
 
 type ComfyHistoryImage = {
   filename: string;
@@ -112,6 +113,9 @@ export class ComfyUIAdapter implements ImageAdapter {
     const seed = request.seed ?? Math.floor(Math.random() * 2 ** 32);
     const checkpoint = await this.resolveCheckpoint(request.checkpoint);
     const workflow = this.buildWorkflow({ ...request, checkpoint, seed });
+    const workflowTemplateId = request.workflowTemplate?.id ?? "builtin:comfyui-basic-txt2img";
+    const workflowTemplateVersion = request.workflowTemplateVersion
+      ?? (request.workflowTemplate ? String(request.workflowTemplate.updatedAt) : this.version);
 
     const response = await fetch(`${this.getEffectiveUrl()}/prompt`, {
       method: "POST",
@@ -131,7 +135,14 @@ export class ComfyUIAdapter implements ImageAdapter {
       throw new Error(payload.error || "ComfyUI 没有返回 prompt_id。");
     }
 
-    return this.pollResult(payload.prompt_id, seed, request, workflow);
+    return this.pollResult(
+      payload.prompt_id,
+      seed,
+      request,
+      workflow,
+      workflowTemplateId,
+      workflowTemplateVersion
+    );
   }
 
   private getBaseUrl(): string {
@@ -157,6 +168,19 @@ export class ComfyUIAdapter implements ImageAdapter {
   }
 
   private buildWorkflow(request: ImageGenerationRequest): Record<string, unknown> {
+    const template = request.workflowTemplate;
+    if (template && !this.shouldUseBuiltinTemplate(template)) {
+      return this.applyWorkflowTemplate(template, request);
+    }
+
+    return this.buildBuiltinWorkflow(request);
+  }
+
+  private shouldUseBuiltinTemplate(template: WorkflowTemplate): boolean {
+    return template.builtin || template.id === "builtin:comfyui-basic-txt2img";
+  }
+
+  private buildBuiltinWorkflow(request: ImageGenerationRequest): Record<string, unknown> {
     const nodes: Record<string, unknown> = {};
     let nextId = 1;
 
@@ -186,6 +210,19 @@ export class ComfyUIAdapter implements ImageAdapter {
       };
       modelOutput = [loraId, 0];
       clipOutput = [loraId, 1];
+    }
+
+    const clipSkip = request.clipSkip ?? 1;
+    if (clipSkip > 1) {
+      const clipSkipId = String(nextId++);
+      nodes[clipSkipId] = {
+        class_type: "CLIPSetLastLayer",
+        inputs: {
+          clip: clipOutput,
+          stop_at_clip_layer: -Math.abs(clipSkip)
+        }
+      };
+      clipOutput = [clipSkipId, 0];
     }
 
     const positiveId = String(nextId++);
@@ -254,11 +291,56 @@ export class ComfyUIAdapter implements ImageAdapter {
     return nodes;
   }
 
+  private applyWorkflowTemplate(
+    template: WorkflowTemplate,
+    request: ImageGenerationRequest
+  ): Record<string, unknown> {
+    if (Object.keys(template.template).length === 0) {
+      throw new Error(`工作流模板 ${template.name} 为空，无法提交到 ComfyUI。`);
+    }
+
+    const workflow = JSON.parse(JSON.stringify(template.template)) as Record<string, unknown>;
+    const setSlot = (slot: WorkflowSlot | undefined, value: unknown) => {
+      if (!slot || value === undefined) {
+        return;
+      }
+
+      const node = workflow[slot.nodeId];
+      if (!node || typeof node !== "object") {
+        throw new Error(`工作流模板缺少节点 ${slot.nodeId}，无法填入 ${slot.inputKey}。`);
+      }
+
+      const inputs = (node as { inputs?: Record<string, unknown> }).inputs;
+      if (!inputs || typeof inputs !== "object") {
+        throw new Error(`工作流模板节点 ${slot.nodeId} 没有 inputs，无法填入 ${slot.inputKey}。`);
+      }
+
+      inputs[slot.inputKey] = value;
+    };
+
+    setSlot(template.slots.checkpoint, request.checkpoint);
+    setSlot(template.slots.positive, request.prompt);
+    setSlot(template.slots.negative, request.negativePrompt || "");
+    setSlot(template.slots.seed, request.seed);
+    setSlot(template.slots.steps, request.steps);
+    setSlot(template.slots.cfgScale, request.cfgScale);
+    setSlot(template.slots.sampler, request.sampler);
+    setSlot(template.slots.width, request.width);
+    setSlot(template.slots.height, request.height);
+    if (request.clipSkip && request.clipSkip > 1) {
+      setSlot(template.slots.clipSkip, -Math.abs(request.clipSkip));
+    }
+
+    return workflow;
+  }
+
   private async pollResult(
     promptId: string,
     seed: number,
     request: ImageGenerationRequest,
     workflow: Record<string, unknown>,
+    workflowTemplateId: string,
+    workflowTemplateVersion: string,
     maxAttempts = 90,
     intervalMs = 2000
   ): Promise<ImageGenerationResult> {
@@ -296,8 +378,8 @@ export class ComfyUIAdapter implements ImageAdapter {
             adapterId: this.id,
             adapterVersion: this.version,
             promptId,
-            workflowTemplateId: "builtin:comfyui-basic-txt2img",
-            workflowTemplateVersion: this.version,
+            workflowTemplateId,
+            workflowTemplateVersion,
             submittedWorkflow: workflow,
             referenceImages: request.referenceImages ?? [],
             loras: request.loras ?? []

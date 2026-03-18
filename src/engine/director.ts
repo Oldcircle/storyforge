@@ -5,7 +5,7 @@ import type { DirectorPreset } from "../types/preset";
 import type { Project } from "../types/project";
 import type { SceneBook } from "../types/scene";
 import type { GlobalSettings } from "../types/settings";
-import type { Storyboard } from "../types/storyboard";
+import type { PromptMode, Storyboard } from "../types/storyboard";
 import { assembleDirectorPrompt } from "./prompt-assembler";
 import { parseStoryboardResponse } from "./storyboard-parser";
 
@@ -17,6 +17,7 @@ export interface GenerateStoryboardInput {
   settings: GlobalSettings;
   userInput: string;
   previousSceneSummary?: string;
+  promptMode?: PromptMode;
 }
 
 export interface GenerateStoryboardResult {
@@ -54,6 +55,7 @@ export async function generateStoryboard(
     input.sceneBook,
     input.userInput,
     input.previousSceneSummary,
+    input.promptMode ?? input.project.settings.promptMode ?? "rules",
   );
 
   const rawResponse = await adapter.chat(messages, {

@@ -2,8 +2,10 @@ import { v4 as uuid } from "uuid";
 import type { CharacterCard } from "../types/character";
 import type { DirectorPreset } from "../types/preset";
 import type { Project } from "../types/project";
+import type { RenderPreset } from "../types/render-preset";
 import type { SceneBook, SceneEntry } from "../types/scene";
 import type { GlobalSettings } from "../types/settings";
+import type { WorkflowTemplate } from "../types/workflow-template";
 
 const now = () => Date.now();
 
@@ -89,11 +91,13 @@ export function createSceneEntry(name = "新条目"): SceneEntry {
     id: uuid(),
     name,
     enabled: true,
+    usage: "shared",
     keywords: [],
     secondaryKeywords: [],
     useRegex: false,
     alwaysActive: false,
     content: {
+      directorContext: "",
       environmentPrompt: "",
       negativePrompt: "",
       props: [],
@@ -181,9 +185,70 @@ export function createProject(name: string, description = ""): Project {
     updatedAt: timestamp,
     characterIds: [],
     storyboardIds: [],
+    workflowTemplateId: "builtin:comfyui-basic-txt2img",
     settings: {
       outputFormat: "image_sequence",
       aspectRatio: "16:9"
+    }
+  };
+}
+
+export function createDefaultRenderPreset(): RenderPreset {
+  const timestamp = now();
+  return {
+    id: uuid(),
+    name: "默认渲染预设",
+    description: "Anime / 插画风格通用预设",
+    createdAt: timestamp,
+    updatedAt: timestamp,
+    positivePrefix: ["masterpiece", "best quality", "very aesthetic"],
+    positiveSuffix: ["detailed background", "depth of field"],
+    negativePrompt: [
+      "lowres", "bad anatomy", "bad hands", "text", "watermark",
+      "worst quality", "low quality", "blurry"
+    ],
+    defaults: {
+      checkpoint: "",
+      sampler: "euler",
+      steps: 30,
+      cfgScale: 7,
+      clipSkip: 2,
+      width: 1024,
+      height: 576
+    },
+    hires: {
+      enabled: false,
+      steps: 40,
+      upscale: 1.5,
+      denoise: 0.4
+    },
+    adetailer: {
+      enabled: false
+    }
+  };
+}
+
+export function createBuiltinTxt2imgTemplate(): WorkflowTemplate {
+  const timestamp = now();
+  return {
+    id: "builtin:comfyui-basic-txt2img",
+    name: "ComfyUI Basic txt2img",
+    description: "最小化 txt2img 工作流：Checkpoint → CLIP → KSampler → VAEDecode → SaveImage",
+    adapter: "comfyui",
+    createdAt: timestamp,
+    updatedAt: timestamp,
+    builtin: true,
+    template: {},  // built at generation time by the adapter
+    slots: {
+      checkpoint: { nodeId: "1", inputKey: "ckpt_name" },
+      positive: { nodeId: "3", inputKey: "text" },
+      negative: { nodeId: "4", inputKey: "text" },
+      seed: { nodeId: "6", inputKey: "seed" },
+      steps: { nodeId: "6", inputKey: "steps" },
+      cfgScale: { nodeId: "6", inputKey: "cfg" },
+      sampler: { nodeId: "6", inputKey: "sampler_name" },
+      width: { nodeId: "5", inputKey: "width" },
+      height: { nodeId: "5", inputKey: "height" }
     }
   };
 }

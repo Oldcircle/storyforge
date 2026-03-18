@@ -1,12 +1,14 @@
 import { create } from "zustand";
 import { ComfyUIAdapter } from "../adapters/image/comfyui";
-import { assembleImagePrompt, getActivatedSceneEntries } from "../engine/prompt-assembler";
+import { compileRenderPlan, getActivatedSceneEntries, getImageEntries } from "../engine/prompt-assembler";
 import { useSettingsStore } from "./settings";
 import { useStoryboardStore } from "./storyboard";
 import type { CharacterCard } from "../types/character";
 import type { DirectorPreset } from "../types/preset";
+import type { RenderPreset } from "../types/render-preset";
 import type { SceneBook } from "../types/scene";
-import type { Shot, ShotExecutionRequest, ShotExecutionSnapshot } from "../types/storyboard";
+import type { PromptMode, Shot, ShotExecutionRequest, ShotExecutionSnapshot } from "../types/storyboard";
+import type { WorkflowTemplate } from "../types/workflow-template";
 
 type ShotStatus = {
   status: "idle" | "generating" | "completed" | "error";
@@ -21,6 +23,9 @@ export type GenerateShotInput = {
   characters: CharacterCard[];
   sceneBook?: SceneBook;
   preset: DirectorPreset;
+  renderPreset?: RenderPreset;
+  workflowTemplate?: WorkflowTemplate;
+  promptMode?: PromptMode;
 };
 
 type GenerationStore = {
@@ -45,7 +50,17 @@ function setShotState(
 export const useGenerationStore = create<GenerationStore>((set, get) => ({
   shotStatus: {},
   generatingAll: false,
-  generateShot: async ({ storyboardId, storyboardUserPrompt, shot, characters, sceneBook, preset }) => {
+  generateShot: async ({
+    storyboardId,
+    storyboardUserPrompt,
+    shot,
+    characters,
+    sceneBook,
+    preset,
+    renderPreset,
+    workflowTemplate,
+    promptMode
+  }) => {
     const startedAt = Date.now();
     set((state) => ({
       shotStatus: setShotState(state.shotStatus, shot.id, {
@@ -67,7 +82,12 @@ export const useGenerationStore = create<GenerationStore>((set, get) => ({
         sceneBook,
         `${storyboardUserPrompt}\n${shot.description}`
       );
-      const assembled = assembleImagePrompt(shot, characters, activatedScenes, preset);
+      const imageEntries = getImageEntries(activatedScenes);
+      const assembled = compileRenderPlan(shot, characters, imageEntries, preset, renderPreset, promptMode);
+      const workflowTemplateId = workflowTemplate?.id ?? "builtin:comfyui-basic-txt2img";
+      const workflowTemplateVersion = workflowTemplate
+        ? String(workflowTemplate.updatedAt)
+        : adapter.version;
       const executionRequest: ShotExecutionRequest = {
         positive: assembled.positive,
         negative: assembled.negative,
@@ -78,8 +98,9 @@ export const useGenerationStore = create<GenerationStore>((set, get) => ({
         sampler: assembled.sampler,
         checkpoint: assembled.checkpoint,
         seed: assembled.seed,
-        workflowTemplateId: "builtin:comfyui-basic-txt2img",
-        workflowTemplateVersion: adapter.version
+        clipSkip: assembled.clipSkip,
+        workflowTemplateId,
+        workflowTemplateVersion
       };
       const runningExecution: ShotExecutionSnapshot = {
         adapterId: adapter.id,
@@ -104,7 +125,10 @@ export const useGenerationStore = create<GenerationStore>((set, get) => ({
         height: assembled.height,
         steps: assembled.steps,
         cfgScale: assembled.cfgScale,
-        sampler: assembled.sampler
+        sampler: assembled.sampler,
+        clipSkip: assembled.clipSkip,
+        workflowTemplate,
+        workflowTemplateVersion
       });
 
       const generatedImage = result.images[0];
@@ -126,6 +150,7 @@ export const useGenerationStore = create<GenerationStore>((set, get) => ({
             width: assembled.width,
             height: assembled.height,
             seed: result.seed ?? assembled.seed,
+            clipSkip: assembled.clipSkip,
             workflowTemplateId: executionRequest.workflowTemplateId,
             workflowTemplateVersion: executionRequest.workflowTemplateVersion
           }
@@ -173,7 +198,12 @@ export const useGenerationStore = create<GenerationStore>((set, get) => ({
             steps: preset.visualStyle.steps,
             cfgScale: preset.visualStyle.cfgScale,
             sampler: preset.visualStyle.sampler,
-            checkpoint: preset.visualStyle.checkpoint
+            checkpoint: renderPreset?.defaults.checkpoint || preset.visualStyle.checkpoint,
+            clipSkip: renderPreset?.defaults.clipSkip,
+            workflowTemplateId: workflowTemplate?.id ?? "builtin:comfyui-basic-txt2img",
+            workflowTemplateVersion: workflowTemplate
+              ? String(workflowTemplate.updatedAt)
+              : "legacy"
           },
           result: currentShot.execution?.result,
           error: message
