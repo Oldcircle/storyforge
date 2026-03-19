@@ -13,6 +13,9 @@ DESIGN.md
 DEV_GUIDE.md
 PLAN.md
 
+# Coverage reports
+coverage/
+
 # Test data & backups
 test-data/
 SillyTavern-Backup/
