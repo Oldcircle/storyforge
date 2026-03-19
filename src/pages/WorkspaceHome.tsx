@@ -31,7 +31,7 @@ export function WorkspaceHomePage({ project }: WorkspaceHomePageProps) {
   if (!project) {
     return (
       <Panel title="未选择项目" subtitle="先从 Dashboard 打开一个项目工作区。">
-        <div className="rounded-2xl border border-dashed border-stroke p-6 text-sm text-text-muted">
+        <div className="rounded-2xl border border-dashed border-stroke/60 bg-bg-primary/30 p-8 text-sm text-text-muted">
           当前还没有活动项目。创建并进入一个项目后，这里会显示资产绑定与工作区概览。
         </div>
       </Panel>
@@ -45,7 +45,7 @@ export function WorkspaceHomePage({ project }: WorkspaceHomePageProps) {
         subtitle="项目工作区概览与资产绑定。"
         actions={
           <button
-            className="rounded-full border border-stroke px-4 py-2 text-sm text-text-secondary transition hover:text-text-primary"
+            className="rounded-xl border border-stroke/60 bg-bg-tertiary/30 px-4 py-2.5 text-sm text-text-secondary transition hover:border-stroke hover:bg-bg-tertiary hover:text-text-primary hover:shadow-sm"
             onClick={() => {
               const linkedChars = characters.filter((c) => project.characterIds.includes(c.id));
               const linkedScene = sceneBooks.find((s) => s.id === project.sceneBookId);
@@ -70,19 +70,19 @@ export function WorkspaceHomePage({ project }: WorkspaceHomePageProps) {
         }
       >
         <div className="grid gap-4 md:grid-cols-3">
-          <div className="rounded-2xl border border-stroke bg-bg-primary/70 p-4">
+          <div className="rounded-xl border border-stroke/50 bg-bg-primary/50 p-4 shadow-inner">
               <div className="text-xs uppercase tracking-[0.2em] text-text-muted">Aspect</div>
               <div className="mt-2 text-lg font-semibold text-text-primary">
                 {project.settings.aspectRatio}
               </div>
             </div>
-            <div className="rounded-2xl border border-stroke bg-bg-primary/70 p-4">
+            <div className="rounded-xl border border-stroke/50 bg-bg-primary/50 p-4 shadow-inner">
               <div className="text-xs uppercase tracking-[0.2em] text-text-muted">Output</div>
               <div className="mt-2 text-lg font-semibold text-text-primary">
                 {project.settings.outputFormat}
               </div>
             </div>
-            <div className="rounded-2xl border border-stroke bg-bg-primary/70 p-4">
+            <div className="rounded-xl border border-stroke/50 bg-bg-primary/50 p-4 shadow-inner">
               <div className="text-xs uppercase tracking-[0.2em] text-text-muted">Status</div>
             <div className="mt-2 text-lg font-semibold text-text-primary">Ready for assets</div>
           </div>
@@ -101,7 +101,7 @@ export function WorkspaceHomePage({ project }: WorkspaceHomePageProps) {
             </div>
             <div className="space-y-2">
               {characters.length === 0 ? (
-                <div className="rounded-2xl border border-dashed border-stroke p-4 text-sm text-text-muted">
+                <div className="rounded-2xl border border-dashed border-stroke/60 bg-bg-primary/30 p-6 text-sm text-text-muted">
                   还没有角色卡，先去角色页创建 1-2 个主角色。
                 </div>
               ) : null}
@@ -110,11 +110,11 @@ export function WorkspaceHomePage({ project }: WorkspaceHomePageProps) {
                 return (
                   <label
                     key={character.id}
-                    className="flex items-start gap-3 rounded-2xl border border-stroke bg-bg-primary/60 p-4"
+                    className="flex items-start gap-3 rounded-xl border border-stroke bg-bg-primary/60 p-4"
                   >
                     <input
                       checked={linked}
-                      className="mt-1 h-4 w-4 accent-[#5ea4ff]"
+                      className="mt-1 h-4 w-4 rounded border-stroke accent-accent-blue"
                       type="checkbox"
                       onChange={(event) => {
                         if (event.target.checked) {
@@ -139,7 +139,7 @@ export function WorkspaceHomePage({ project }: WorkspaceHomePageProps) {
           <div className="space-y-4">
             <Field label="场景书">
               <select
-                className="w-full rounded-2xl border border-stroke bg-bg-primary px-4 py-3 text-sm text-text-primary outline-none transition focus:border-accent-blue"
+                className="w-full rounded-xl border border-stroke/60 bg-bg-tertiary/50 px-4 py-2.5 hover:border-stroke-strong text-sm text-text-primary placeholder:text-text-muted outline-none transition focus:border-accent-blue focus:ring-2 focus:ring-accent-blue/10"
                 value={project.sceneBookId ?? ""}
                 onChange={(event) =>
                   void setSceneBook(project.id, event.target.value || undefined)
@@ -156,7 +156,7 @@ export function WorkspaceHomePage({ project }: WorkspaceHomePageProps) {
 
             <Field label="导演预设">
               <select
-                className="w-full rounded-2xl border border-stroke bg-bg-primary px-4 py-3 text-sm text-text-primary outline-none transition focus:border-accent-blue"
+                className="w-full rounded-xl border border-stroke/60 bg-bg-tertiary/50 px-4 py-2.5 hover:border-stroke-strong text-sm text-text-primary placeholder:text-text-muted outline-none transition focus:border-accent-blue focus:ring-2 focus:ring-accent-blue/10"
                 value={project.presetId ?? ""}
                 onChange={(event) => void setPreset(project.id, event.target.value || undefined)}
               >
@@ -171,7 +171,7 @@ export function WorkspaceHomePage({ project }: WorkspaceHomePageProps) {
 
             <Field label="渲染预设">
               <select
-                className="w-full rounded-2xl border border-stroke bg-bg-primary px-4 py-3 text-sm text-text-primary outline-none transition focus:border-accent-blue"
+                className="w-full rounded-xl border border-stroke/60 bg-bg-tertiary/50 px-4 py-2.5 hover:border-stroke-strong text-sm text-text-primary placeholder:text-text-muted outline-none transition focus:border-accent-blue focus:ring-2 focus:ring-accent-blue/10"
                 value={project.renderPresetId ?? ""}
                 onChange={(event) =>
                   void setRenderPreset(project.id, event.target.value || undefined)
@@ -188,7 +188,7 @@ export function WorkspaceHomePage({ project }: WorkspaceHomePageProps) {
 
             <Field label="工作流模板">
               <select
-                className="w-full rounded-2xl border border-stroke bg-bg-primary px-4 py-3 text-sm text-text-primary outline-none transition focus:border-accent-blue"
+                className="w-full rounded-xl border border-stroke/60 bg-bg-tertiary/50 px-4 py-2.5 hover:border-stroke-strong text-sm text-text-primary placeholder:text-text-muted outline-none transition focus:border-accent-blue focus:ring-2 focus:ring-accent-blue/10"
                 value={project.workflowTemplateId ?? ""}
                 onChange={(event) =>
                   void setWorkflowTemplate(project.id, event.target.value || undefined)
@@ -205,7 +205,7 @@ export function WorkspaceHomePage({ project }: WorkspaceHomePageProps) {
 
             <Field label="Prompt 模式">
               <select
-                className="w-full rounded-2xl border border-stroke bg-bg-primary px-4 py-3 text-sm text-text-primary outline-none transition focus:border-accent-blue"
+                className="w-full rounded-xl border border-stroke/60 bg-bg-tertiary/50 px-4 py-2.5 hover:border-stroke-strong text-sm text-text-primary placeholder:text-text-muted outline-none transition focus:border-accent-blue focus:ring-2 focus:ring-accent-blue/10"
                 value={project.settings.promptMode ?? "rules"}
                 onChange={(event) =>
                   void setPromptMode(project.id, event.target.value as "rules" | "llm-assisted" | "llm-writer")
@@ -225,7 +225,7 @@ export function WorkspaceHomePage({ project }: WorkspaceHomePageProps) {
               </p>
             </Field>
 
-            <div className="rounded-3xl border border-stroke bg-bg-primary/70 p-4 text-sm text-text-secondary">
+            <div className="rounded-xl border border-stroke/50 bg-bg-primary/50 p-4 shadow-inner text-sm text-text-secondary">
               <div className="font-semibold text-text-primary">当前绑定摘要</div>
               <div className="mt-3 space-y-2">
                 <p>角色数：{project.characterIds.length}</p>

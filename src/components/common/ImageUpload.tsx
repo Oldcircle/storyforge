@@ -24,7 +24,7 @@ export function ImageUpload({ value, onChange, maxImages = 6 }: ImageUploadProps
 
   return (
     <div className="space-y-3">
-      <label className="flex cursor-pointer items-center justify-center rounded-3xl border border-dashed border-stroke bg-bg-primary/70 px-4 py-6 text-sm text-text-secondary transition hover:border-stroke-strong hover:text-text-primary">
+      <label className="flex cursor-pointer items-center justify-center rounded-xl border border-dashed border-stroke bg-bg-primary/50 px-4 py-6 text-sm text-text-secondary transition hover:border-accent-blue/30 hover:text-text-primary">
         <input
           accept="image/*"
           className="hidden"
@@ -38,14 +38,14 @@ export function ImageUpload({ value, onChange, maxImages = 6 }: ImageUploadProps
       {value.length > 0 ? (
         <div className="grid gap-3 sm:grid-cols-2 xl:grid-cols-3">
           {value.map((image, index) => (
-            <div key={`${image.slice(0, 32)}-${index}`} className="rounded-3xl border border-stroke bg-bg-secondary/60 p-3">
+            <div key={`${image.slice(0, 32)}-${index}`} className="rounded-xl border border-stroke bg-bg-secondary/60 p-3">
               <img
                 alt={`上传图片 ${index + 1}`}
-                className="h-32 w-full rounded-2xl object-cover"
+                className="h-32 w-full rounded-lg object-cover"
                 src={image}
               />
               <button
-                className="mt-3 w-full rounded-2xl border border-stroke px-3 py-2 text-xs text-text-secondary transition hover:text-text-primary"
+                className="mt-3 w-full rounded-lg border border-stroke px-3 py-2 text-xs text-text-secondary transition hover:text-text-primary"
                 type="button"
                 onClick={() => onChange(value.filter((_, imageIndex) => imageIndex !== index))}
               >

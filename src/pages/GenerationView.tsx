@@ -17,7 +17,7 @@ interface GenerationViewPageProps {
 
 function StatCard({ label, value }: { label: string; value: string | number }) {
   return (
-    <div className="rounded-2xl border border-stroke bg-bg-primary/70 p-4">
+    <div className="rounded-xl border border-stroke/50 bg-bg-primary/50 p-4 shadow-inner">
       <div className="text-xs uppercase tracking-[0.2em] text-text-muted">{label}</div>
       <div className="mt-2 text-lg font-semibold text-text-primary">{value}</div>
     </div>
@@ -126,7 +126,7 @@ export function GenerationViewPage({ project }: GenerationViewPageProps) {
   if (!project) {
     return (
       <Panel title="未选择项目" subtitle="先从 Dashboard 进入一个项目工作区。">
-        <div className="rounded-2xl border border-dashed border-stroke p-6 text-sm text-text-muted">
+        <div className="rounded-2xl border border-dashed border-stroke/60 bg-bg-primary/30 p-8 text-sm text-text-muted">
           还没有活动项目，暂时无法发起生图任务。
         </div>
       </Panel>
@@ -140,7 +140,7 @@ export function GenerationViewPage({ project }: GenerationViewPageProps) {
         subtitle="对当前项目的结构化分镜逐镜生成图片，并把结果直接写回 storyboard。"
         actions={
           <button
-            className="rounded-full bg-accent-blue px-5 py-3 text-sm font-semibold text-white transition hover:brightness-110 disabled:cursor-not-allowed disabled:opacity-50"
+            className="rounded-xl bg-accent-blue px-4 py-2.5 text-sm font-medium text-white shadow-lg shadow-accent-blue/20 transition hover:bg-accent-blue/90 disabled:opacity-50 disabled:shadow-none"
             disabled={
               generatingAll ||
               loading ||
@@ -166,54 +166,54 @@ export function GenerationViewPage({ project }: GenerationViewPageProps) {
 
         <div className="mt-4 space-y-3">
           {error ? (
-            <div className="rounded-2xl border border-rose-400/30 bg-rose-400/10 p-4 text-sm text-text-secondary">
+            <div className="rounded-xl border border-accent-rose/20 bg-accent-rose/5 p-4 text-sm text-text-secondary">
               {error}
             </div>
           ) : null}
 
           {!preset ? (
-            <div className="rounded-2xl border border-amber-300/30 bg-amber-300/10 p-4 text-sm text-text-secondary">
+            <div className="rounded-xl border border-accent-amber/20 bg-accent-amber/5 p-4 text-sm text-text-secondary">
               当前项目还没有绑定导演预设，生图阶段需要先继承预设里的分辨率、采样器和步数设置。
             </div>
           ) : null}
 
           {!sceneBook ? (
-            <div className="rounded-2xl border border-amber-300/30 bg-amber-300/10 p-4 text-sm text-text-secondary">
+            <div className="rounded-xl border border-accent-amber/20 bg-accent-amber/5 p-4 text-sm text-text-secondary">
               当前项目没有绑定场景书，镜头仍然可以生成，但环境锚点会明显变弱。
             </div>
           ) : null}
 
           {!renderPreset ? (
-            <div className="rounded-2xl border border-amber-300/30 bg-amber-300/10 p-4 text-sm text-text-secondary">
+            <div className="rounded-xl border border-accent-amber/20 bg-accent-amber/5 p-4 text-sm text-text-secondary">
               当前项目没有绑定渲染预设，将回退到导演预设里的基础采样参数，质量词包和负面词包不会生效。
             </div>
           ) : null}
 
           {linkedCharacters.length === 0 ? (
-            <div className="rounded-2xl border border-amber-300/30 bg-amber-300/10 p-4 text-sm text-text-secondary">
+            <div className="rounded-xl border border-accent-amber/20 bg-accent-amber/5 p-4 text-sm text-text-secondary">
               当前项目没有关联角色卡，生成出的画面会缺少角色一致性锚点。
             </div>
           ) : null}
 
           {!settings.comfyuiUrl.trim() ? (
-            <div className="rounded-2xl border border-amber-300/30 bg-amber-300/10 p-4 text-sm text-text-secondary">
+            <div className="rounded-xl border border-accent-amber/20 bg-accent-amber/5 p-4 text-sm text-text-secondary">
               还没有配置 ComfyUI 地址，请先去 Settings 填写并测试连接。
             </div>
           ) : null}
 
           {!workflowTemplate ? (
-            <div className="rounded-2xl border border-sky-400/20 bg-sky-400/10 p-4 text-sm text-text-secondary">
+            <div className="rounded-xl border border-accent-blue/20 bg-accent-blue/5 p-4 text-sm text-text-secondary">
               当前项目没有显式绑定工作流模板，将回退到内置基础 txt2img 模板。
             </div>
           ) : null}
 
           {storyboards.length === 0 ? (
-            <div className="rounded-2xl border border-dashed border-stroke p-4 text-sm text-text-muted">
+            <div className="rounded-2xl border border-dashed border-stroke/60 bg-bg-primary/30 p-6 text-sm text-text-muted">
               当前项目还没有分镜记录，先去“分镜”页生成一条 storyboard。
             </div>
           ) : null}
 
-          <div className="rounded-2xl border border-sky-400/20 bg-sky-400/10 p-4 text-sm text-text-secondary">
+          <div className="rounded-xl border border-accent-blue/20 bg-accent-blue/5 p-4 text-sm text-text-secondary">
             MVP 阶段直接使用 ComfyUI 的 `/view` 图片地址。如果图片不显示，通常需要用
             `--enable-cors-header` 启动 ComfyUI。
           </div>
@@ -224,7 +224,7 @@ export function GenerationViewPage({ project }: GenerationViewPageProps) {
         <Panel title="可用分镜" subtitle="选择一个 storyboard 作为当前生图批次。">
           <div className="space-y-2">
             {storyboards.length === 0 ? (
-              <div className="rounded-2xl border border-dashed border-stroke p-4 text-sm text-text-muted">
+              <div className="rounded-2xl border border-dashed border-stroke/60 bg-bg-primary/30 p-6 text-sm text-text-muted">
                 暂时没有可生成的分镜。
               </div>
             ) : null}
@@ -257,20 +257,20 @@ export function GenerationViewPage({ project }: GenerationViewPageProps) {
           }
         >
           {!selected ? (
-            <div className="rounded-2xl border border-dashed border-stroke p-6 text-sm text-text-muted">
+            <div className="rounded-2xl border border-dashed border-stroke/60 bg-bg-primary/30 p-8 text-sm text-text-muted">
               还没有选中的分镜记录。
             </div>
           ) : (
             <div className="space-y-4">
               {selectedShots.length > 1 && (
-                <div className="flex items-center justify-between rounded-2xl border border-accent-blue/30 bg-accent-blue/5 p-4">
+                <div className="flex items-center justify-between rounded-xl border border-accent-blue/30 bg-accent-blue/5 p-4">
                   <div className="text-sm text-text-secondary">
                     {generatingAll
                       ? <span className="font-semibold text-accent-blue">正在批量生成 {completedCount + generatingCount}/{selectedShots.length}...</span>
                       : <span>共 {selectedShots.length} 个镜头，已完成 {completedCount} 个</span>}
                   </div>
                   <button
-                    className="rounded-full bg-accent-blue px-5 py-2.5 text-sm font-semibold text-white transition hover:brightness-110 disabled:cursor-not-allowed disabled:opacity-50"
+                    className="rounded-xl bg-accent-blue px-4 py-2.5 text-sm font-medium text-white shadow-lg shadow-accent-blue/20 transition hover:bg-accent-blue/90 disabled:opacity-50 disabled:shadow-none"
                     disabled={
                       generatingAll ||
                       loading ||
@@ -291,9 +291,9 @@ export function GenerationViewPage({ project }: GenerationViewPageProps) {
                 const execution = shot.execution;
 
                 return (
-                  <div key={shot.id} className="rounded-3xl border border-stroke bg-bg-primary/70 p-4">
+                  <div key={shot.id} className="rounded-xl border border-stroke/50 bg-bg-primary/50 p-4 shadow-inner">
                     <div className="grid gap-4 lg:grid-cols-[280px_minmax(0,1fr)]">
-                      <div className="overflow-hidden rounded-3xl border border-stroke bg-bg-secondary/70">
+                      <div className="overflow-hidden rounded-xl border border-stroke bg-bg-secondary/70">
                         {previewUrl ? (
                           <img
                             src={previewUrl}
@@ -322,7 +322,7 @@ export function GenerationViewPage({ project }: GenerationViewPageProps) {
                             <div className="rounded-full border border-stroke px-3 py-1 font-mono text-xs text-text-muted">
                               {shot.cameraMovement}
                             </div>
-                            <div className="rounded-full border border-stroke px-3 py-1 text-xs text-text-secondary">
+                            <div className="rounded-lg border border-stroke bg-bg-secondary/50 px-2 py-0.5 text-xs text-text-secondary">
                               {effectiveStatus}
                             </div>
                           </div>
@@ -413,14 +413,14 @@ export function GenerationViewPage({ project }: GenerationViewPageProps) {
                         ) : null}
 
                         {errorMessage ? (
-                          <div className="rounded-2xl border border-rose-400/30 bg-rose-400/10 p-3 text-sm text-text-secondary">
+                          <div className="rounded-xl border border-accent-rose/20 bg-accent-rose/5 p-3 text-sm text-text-secondary">
                             {errorMessage}
                           </div>
                         ) : null}
 
                         <div className="flex flex-wrap gap-3">
                           <button
-                            className="rounded-full bg-accent-blue px-4 py-2 text-sm font-semibold text-white transition hover:brightness-110 disabled:cursor-not-allowed disabled:opacity-50"
+                            className="rounded-xl bg-accent-blue px-4 py-2.5 text-sm font-medium text-white shadow-lg shadow-accent-blue/20 transition hover:bg-accent-blue/90 disabled:opacity-50 disabled:shadow-none"
                             disabled={!preset || !settings.comfyuiUrl.trim() || effectiveStatus === "generating"}
                             onClick={() => {
                               if (!preset) {

@@ -53,19 +53,19 @@ export function DashboardPage({ projects, onCreate, onOpenProject, onImportProje
           subtitle="先把工作区、资产和导演预设稳定下来，再进入模型与生成链路。"
         >
           <div className="grid gap-3 md:grid-cols-3">
-            <div className="rounded-2xl border border-stroke bg-bg-primary/70 p-4">
+            <div className="rounded-xl border border-stroke/50 bg-bg-primary/50 p-4 shadow-inner">
               <div className="text-xs uppercase tracking-[0.2em] text-text-muted">Projects</div>
-              <div className="mt-2 text-3xl font-semibold text-text-primary">
+              <div className="mt-2 text-2xl font-bold text-text-primary">
                 {projectSummary.totalProjects}
               </div>
             </div>
-            <div className="rounded-2xl border border-stroke bg-bg-primary/70 p-4">
+            <div className="rounded-xl border border-stroke/50 bg-bg-primary/50 p-4 shadow-inner">
               <div className="text-xs uppercase tracking-[0.2em] text-text-muted">Linked Roles</div>
-              <div className="mt-2 text-3xl font-semibold text-text-primary">
+              <div className="mt-2 text-2xl font-bold text-text-primary">
                 {projectSummary.totalCharacters}
               </div>
             </div>
-            <div className="rounded-2xl border border-stroke bg-bg-primary/70 p-4">
+            <div className="rounded-xl border border-stroke/50 bg-bg-primary/50 p-4 shadow-inner">
               <div className="text-xs uppercase tracking-[0.2em] text-text-muted">Current Goal</div>
               <div className="mt-2 text-sm font-medium text-text-secondary">
                 Phase 0 + thin Phase 1
@@ -77,20 +77,20 @@ export function DashboardPage({ projects, onCreate, onOpenProject, onImportProje
         <Panel title="新建项目" subtitle="先创建一个最小工作区，后面再挂角色卡和场景书。">
           <div className="space-y-3">
             <input
-              className="w-full rounded-2xl border border-stroke bg-bg-primary px-4 py-3 text-sm text-text-primary outline-none transition focus:border-accent-blue"
+              className="w-full rounded-xl border border-stroke/60 bg-bg-tertiary/50 px-4 py-2.5 hover:border-stroke-strong text-sm text-text-primary placeholder:text-text-muted outline-none transition focus:border-accent-blue focus:ring-2 focus:ring-accent-blue/10"
               placeholder="例如：都市爱情试验片"
               value={name}
               onChange={(event) => setName(event.target.value)}
             />
             <textarea
-              className="min-h-28 w-full rounded-2xl border border-stroke bg-bg-primary px-4 py-3 text-sm text-text-primary outline-none transition focus:border-accent-blue"
+              className="min-h-28 w-full rounded-xl border border-stroke/60 bg-bg-tertiary/50 px-4 py-2.5 hover:border-stroke-strong text-sm text-text-primary placeholder:text-text-muted outline-none transition focus:border-accent-blue focus:ring-2 focus:ring-accent-blue/10"
               placeholder="记录项目目标、风格或验证假设"
               value={description}
               onChange={(event) => setDescription(event.target.value)}
             />
             <div className="flex gap-2">
               <button
-                className="flex-1 rounded-2xl bg-accent-blue px-4 py-3 text-sm font-medium text-white transition hover:brightness-110 disabled:opacity-60"
+                className="flex-1 rounded-xl bg-accent-blue px-4 py-2.5 text-sm font-medium text-white shadow-lg shadow-accent-blue/20 transition hover:bg-accent-blue/90 disabled:opacity-50 disabled:shadow-none"
                 disabled={submitting || !name.trim()}
                 onClick={() => void handleCreate()}
               >
@@ -98,7 +98,7 @@ export function DashboardPage({ projects, onCreate, onOpenProject, onImportProje
               </button>
               {onImportProject && (
                 <button
-                  className="rounded-2xl border border-stroke px-4 py-3 text-sm text-text-secondary transition hover:text-text-primary"
+                  className="rounded-xl border border-stroke/60 bg-bg-tertiary/30 px-4 py-2.5 text-sm text-text-secondary transition hover:border-stroke hover:bg-bg-tertiary hover:text-text-primary hover:shadow-sm"
                   onClick={() => importRef.current?.click()}
                 >
                   导入项目
@@ -125,7 +125,7 @@ export function DashboardPage({ projects, onCreate, onOpenProject, onImportProje
               />
             </div>
             {notice && (
-              <div className="rounded-2xl border border-accent-blue/30 bg-accent-blue/10 p-3 text-xs text-text-secondary">
+              <div className="rounded-xl border border-accent-blue/30 bg-accent-blue/10 p-3 text-xs text-text-secondary">
                 {notice}
               </div>
             )}
@@ -135,7 +135,7 @@ export function DashboardPage({ projects, onCreate, onOpenProject, onImportProje
 
       <Panel title="项目列表" subtitle="点击任意项目进入工作区。">
         {projects.length === 0 ? (
-          <div className="rounded-3xl border border-dashed border-stroke p-8 text-center text-text-muted">
+          <div className="rounded-2xl border border-dashed border-stroke/60 bg-bg-primary/30 p-10 text-center text-text-muted">
             还没有项目。先创建一个 MVP 工作区，我们再往里面接角色和场景。
           </div>
         ) : (
@@ -143,7 +143,7 @@ export function DashboardPage({ projects, onCreate, onOpenProject, onImportProje
             {projects.map((project) => (
               <button
                 key={project.id}
-                className="group rounded-[28px] border border-stroke bg-bg-primary/70 p-5 text-left transition hover:-translate-y-0.5 hover:border-stroke-strong"
+                className="group rounded-2xl border border-stroke/50 bg-bg-secondary/50 p-5 text-left transition duration-300 hover:-translate-y-1 hover:border-accent-blue/30 hover:bg-bg-secondary/80 hover:shadow-xl hover:shadow-accent-blue/5"
                 onClick={() => onOpenProject(project.id)}
               >
                 <div className="flex items-start justify-between gap-4">

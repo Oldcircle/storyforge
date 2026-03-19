@@ -144,7 +144,7 @@ export function RenderPresetEditorPage() {
         actions={
           <div className="flex gap-2">
             <button
-              className="rounded-full border border-stroke px-4 py-2 text-sm text-text-secondary transition hover:text-text-primary"
+              className="rounded-xl border border-stroke/60 bg-bg-tertiary/30 px-4 py-2.5 text-sm text-text-secondary transition hover:border-stroke hover:bg-bg-tertiary hover:text-text-primary hover:shadow-sm"
               onClick={() => importFileRef.current?.click()}
             >
               导入 JSON
@@ -157,7 +157,7 @@ export function RenderPresetEditorPage() {
               onChange={(e) => void handleImportJSON(e)}
             />
             <button
-              className="rounded-full bg-accent-blue px-4 py-2 text-sm font-medium text-white transition hover:brightness-110"
+              className="rounded-xl bg-accent-blue px-4 py-2.5 text-sm font-medium text-white shadow-lg shadow-accent-blue/20 transition hover:bg-accent-blue/90 disabled:opacity-50 disabled:shadow-none"
               onClick={() => void createPreset().then(selectPreset)}
             >
               新建渲染预设
@@ -183,7 +183,7 @@ export function RenderPresetEditorPage() {
             </button>
           ))}
           {presets.length === 0 && (
-            <div className="rounded-2xl border border-dashed border-stroke p-4 text-sm text-text-muted">
+            <div className="rounded-2xl border border-dashed border-stroke/60 bg-bg-primary/30 p-6 text-sm text-text-muted">
               还没有渲染预设。创建一个来定义质量词和炼图默认参数。
             </div>
           )}
@@ -197,13 +197,13 @@ export function RenderPresetEditorPage() {
           selected ? (
             <div className="flex gap-2">
               <button
-                className="rounded-full border border-stroke px-4 py-2 text-sm text-text-secondary transition hover:text-text-primary"
+                className="rounded-xl border border-stroke/60 bg-bg-tertiary/30 px-4 py-2.5 text-sm text-text-secondary transition hover:border-stroke hover:bg-bg-tertiary hover:text-text-primary hover:shadow-sm"
                 onClick={() => void removePreset(selected.id)}
               >
                 删除
               </button>
               <button
-                className="rounded-full bg-accent-mint px-4 py-2 text-sm font-medium text-white transition hover:brightness-110"
+                className="rounded-xl bg-accent-mint px-4 py-2.5 text-sm font-medium text-white shadow-lg shadow-accent-mint/20 transition hover:bg-accent-mint/90"
                 onClick={() => void handleSave()}
               >
                 保存
@@ -213,24 +213,24 @@ export function RenderPresetEditorPage() {
         }
       >
         {!draft ? (
-          <div className="rounded-2xl border border-dashed border-stroke p-6 text-sm text-text-muted">
+          <div className="rounded-2xl border border-dashed border-stroke/60 bg-bg-primary/30 p-8 text-sm text-text-muted">
             选择左侧渲染预设后开始编辑。
           </div>
         ) : (
           <div className="space-y-5">
             <Field label="名称">
               <input
-                className="w-full rounded-2xl border border-stroke bg-bg-primary px-4 py-3 text-sm text-text-primary outline-none transition focus:border-accent-blue"
+                className="w-full rounded-xl border border-stroke/60 bg-bg-tertiary/50 px-4 py-2.5 hover:border-stroke-strong text-sm text-text-primary placeholder:text-text-muted outline-none transition focus:border-accent-blue focus:ring-2 focus:ring-accent-blue/10"
                 value={draft.name}
                 onChange={(e) => setDraft({ ...draft, name: e.target.value })}
               />
             </Field>
 
-            <div className="rounded-3xl border border-stroke bg-bg-primary/40 p-4 space-y-4">
+            <div className="rounded-xl border border-stroke bg-bg-primary/40 p-4 space-y-4">
               <h3 className="text-sm font-semibold text-text-primary">Prompt 词包</h3>
               <Field label="质量前缀" hint="逗号分隔，自动加在正面 prompt 开头">
                 <textarea
-                  className="min-h-16 w-full rounded-2xl border border-stroke bg-bg-secondary px-4 py-3 text-sm text-text-primary outline-none transition focus:border-accent-blue"
+                  className="min-h-16 w-full rounded-xl border border-stroke/60 bg-bg-tertiary/50 px-4 py-2.5 hover:border-stroke-strong text-sm text-text-primary placeholder:text-text-muted outline-none transition focus:border-accent-blue focus:ring-2 focus:ring-accent-blue/10"
                   placeholder="masterpiece, best quality, very aesthetic"
                   value={draft.positivePrefix}
                   onChange={(e) => setDraft({ ...draft, positivePrefix: e.target.value })}
@@ -238,7 +238,7 @@ export function RenderPresetEditorPage() {
               </Field>
               <Field label="质量后缀" hint="逗号分隔，自动加在正面 prompt 末尾">
                 <textarea
-                  className="min-h-16 w-full rounded-2xl border border-stroke bg-bg-secondary px-4 py-3 text-sm text-text-primary outline-none transition focus:border-accent-blue"
+                  className="min-h-16 w-full rounded-xl border border-stroke/60 bg-bg-tertiary/50 px-4 py-2.5 hover:border-stroke-strong text-sm text-text-primary placeholder:text-text-muted outline-none transition focus:border-accent-blue focus:ring-2 focus:ring-accent-blue/10"
                   placeholder="detailed background, depth of field"
                   value={draft.positiveSuffix}
                   onChange={(e) => setDraft({ ...draft, positiveSuffix: e.target.value })}
@@ -246,7 +246,7 @@ export function RenderPresetEditorPage() {
               </Field>
               <Field label="负面词" hint="逗号分隔，自动追加到负面 prompt">
                 <textarea
-                  className="min-h-16 w-full rounded-2xl border border-stroke bg-bg-secondary px-4 py-3 text-sm text-text-primary outline-none transition focus:border-accent-blue"
+                  className="min-h-16 w-full rounded-xl border border-stroke/60 bg-bg-tertiary/50 px-4 py-2.5 hover:border-stroke-strong text-sm text-text-primary placeholder:text-text-muted outline-none transition focus:border-accent-blue focus:ring-2 focus:ring-accent-blue/10"
                   placeholder="lowres, bad anatomy, bad hands, text, watermark"
                   value={draft.negativePrompt}
                   onChange={(e) => setDraft({ ...draft, negativePrompt: e.target.value })}
@@ -254,13 +254,13 @@ export function RenderPresetEditorPage() {
               </Field>
             </div>
 
-            <div className="rounded-3xl border border-stroke bg-bg-primary/40 p-4 space-y-4">
+            <div className="rounded-xl border border-stroke bg-bg-primary/40 p-4 space-y-4">
               <h3 className="text-sm font-semibold text-text-primary">生成参数</h3>
               <div className="grid gap-4 md:grid-cols-2">
                 <Field label="Checkpoint" hint="从 ComfyUI 获取可用模型">
                   {checkpoints.length > 0 ? (
                     <select
-                      className="w-full rounded-2xl border border-stroke bg-bg-secondary px-4 py-3 text-sm text-text-primary outline-none transition focus:border-accent-blue"
+                      className="w-full rounded-xl border border-stroke/60 bg-bg-tertiary/50 px-4 py-2.5 hover:border-stroke-strong text-sm text-text-primary placeholder:text-text-muted outline-none transition focus:border-accent-blue focus:ring-2 focus:ring-accent-blue/10"
                       value={draft.checkpoint}
                       onChange={(e) => setDraft({ ...draft, checkpoint: e.target.value })}
                     >
@@ -271,7 +271,7 @@ export function RenderPresetEditorPage() {
                     </select>
                   ) : (
                     <input
-                      className="w-full rounded-2xl border border-stroke bg-bg-secondary px-4 py-3 text-sm text-text-primary outline-none transition focus:border-accent-blue"
+                      className="w-full rounded-xl border border-stroke/60 bg-bg-tertiary/50 px-4 py-2.5 hover:border-stroke-strong text-sm text-text-primary placeholder:text-text-muted outline-none transition focus:border-accent-blue focus:ring-2 focus:ring-accent-blue/10"
                       value={draft.checkpoint}
                       placeholder="无法连接 ComfyUI，手动输入"
                       onChange={(e) => setDraft({ ...draft, checkpoint: e.target.value })}
@@ -281,7 +281,7 @@ export function RenderPresetEditorPage() {
                 <Field label="Sampler">
                   {samplers.length > 0 ? (
                     <select
-                      className="w-full rounded-2xl border border-stroke bg-bg-secondary px-4 py-3 text-sm text-text-primary outline-none transition focus:border-accent-blue"
+                      className="w-full rounded-xl border border-stroke/60 bg-bg-tertiary/50 px-4 py-2.5 hover:border-stroke-strong text-sm text-text-primary placeholder:text-text-muted outline-none transition focus:border-accent-blue focus:ring-2 focus:ring-accent-blue/10"
                       value={draft.sampler}
                       onChange={(e) => setDraft({ ...draft, sampler: e.target.value })}
                     >
@@ -291,7 +291,7 @@ export function RenderPresetEditorPage() {
                     </select>
                   ) : (
                     <input
-                      className="w-full rounded-2xl border border-stroke bg-bg-secondary px-4 py-3 text-sm text-text-primary outline-none transition focus:border-accent-blue"
+                      className="w-full rounded-xl border border-stroke/60 bg-bg-tertiary/50 px-4 py-2.5 hover:border-stroke-strong text-sm text-text-primary placeholder:text-text-muted outline-none transition focus:border-accent-blue focus:ring-2 focus:ring-accent-blue/10"
                       value={draft.sampler}
                       placeholder="无法连接 ComfyUI，手动输入"
                       onChange={(e) => setDraft({ ...draft, sampler: e.target.value })}
@@ -301,7 +301,7 @@ export function RenderPresetEditorPage() {
                 <Field label="Scheduler">
                   {schedulers.length > 0 ? (
                     <select
-                      className="w-full rounded-2xl border border-stroke bg-bg-secondary px-4 py-3 text-sm text-text-primary outline-none transition focus:border-accent-blue"
+                      className="w-full rounded-xl border border-stroke/60 bg-bg-tertiary/50 px-4 py-2.5 hover:border-stroke-strong text-sm text-text-primary placeholder:text-text-muted outline-none transition focus:border-accent-blue focus:ring-2 focus:ring-accent-blue/10"
                       value={draft.scheduler}
                       onChange={(e) => setDraft({ ...draft, scheduler: e.target.value })}
                     >
@@ -311,7 +311,7 @@ export function RenderPresetEditorPage() {
                     </select>
                   ) : (
                     <input
-                      className="w-full rounded-2xl border border-stroke bg-bg-secondary px-4 py-3 text-sm text-text-primary outline-none transition focus:border-accent-blue"
+                      className="w-full rounded-xl border border-stroke/60 bg-bg-tertiary/50 px-4 py-2.5 hover:border-stroke-strong text-sm text-text-primary placeholder:text-text-muted outline-none transition focus:border-accent-blue focus:ring-2 focus:ring-accent-blue/10"
                       value={draft.scheduler}
                       placeholder="exponential"
                       onChange={(e) => setDraft({ ...draft, scheduler: e.target.value })}
@@ -320,7 +320,7 @@ export function RenderPresetEditorPage() {
                 </Field>
                 <Field label="Steps">
                   <input
-                    className="w-full rounded-2xl border border-stroke bg-bg-secondary px-4 py-3 text-sm text-text-primary outline-none transition focus:border-accent-blue"
+                    className="w-full rounded-xl border border-stroke/60 bg-bg-tertiary/50 px-4 py-2.5 hover:border-stroke-strong text-sm text-text-primary placeholder:text-text-muted outline-none transition focus:border-accent-blue focus:ring-2 focus:ring-accent-blue/10"
                     type="number"
                     value={draft.steps}
                     onChange={(e) => setDraft({ ...draft, steps: Number(e.target.value) || 0 })}
@@ -328,7 +328,7 @@ export function RenderPresetEditorPage() {
                 </Field>
                 <Field label="CFG Scale">
                   <input
-                    className="w-full rounded-2xl border border-stroke bg-bg-secondary px-4 py-3 text-sm text-text-primary outline-none transition focus:border-accent-blue"
+                    className="w-full rounded-xl border border-stroke/60 bg-bg-tertiary/50 px-4 py-2.5 hover:border-stroke-strong text-sm text-text-primary placeholder:text-text-muted outline-none transition focus:border-accent-blue focus:ring-2 focus:ring-accent-blue/10"
                     type="number"
                     step="0.1"
                     value={draft.cfgScale}
@@ -337,7 +337,7 @@ export function RenderPresetEditorPage() {
                 </Field>
                 <Field label="CLIP Skip">
                   <input
-                    className="w-full rounded-2xl border border-stroke bg-bg-secondary px-4 py-3 text-sm text-text-primary outline-none transition focus:border-accent-blue"
+                    className="w-full rounded-xl border border-stroke/60 bg-bg-tertiary/50 px-4 py-2.5 hover:border-stroke-strong text-sm text-text-primary placeholder:text-text-muted outline-none transition focus:border-accent-blue focus:ring-2 focus:ring-accent-blue/10"
                     type="number"
                     value={draft.clipSkip}
                     onChange={(e) => setDraft({ ...draft, clipSkip: Number(e.target.value) || 0 })}
@@ -346,7 +346,7 @@ export function RenderPresetEditorPage() {
                 <div>{/* spacer */}</div>
                 <Field label="宽度">
                   <input
-                    className="w-full rounded-2xl border border-stroke bg-bg-secondary px-4 py-3 text-sm text-text-primary outline-none transition focus:border-accent-blue"
+                    className="w-full rounded-xl border border-stroke/60 bg-bg-tertiary/50 px-4 py-2.5 hover:border-stroke-strong text-sm text-text-primary placeholder:text-text-muted outline-none transition focus:border-accent-blue focus:ring-2 focus:ring-accent-blue/10"
                     type="number"
                     value={draft.width}
                     onChange={(e) => setDraft({ ...draft, width: Number(e.target.value) || 0 })}
@@ -354,7 +354,7 @@ export function RenderPresetEditorPage() {
                 </Field>
                 <Field label="高度">
                   <input
-                    className="w-full rounded-2xl border border-stroke bg-bg-secondary px-4 py-3 text-sm text-text-primary outline-none transition focus:border-accent-blue"
+                    className="w-full rounded-xl border border-stroke/60 bg-bg-tertiary/50 px-4 py-2.5 hover:border-stroke-strong text-sm text-text-primary placeholder:text-text-muted outline-none transition focus:border-accent-blue focus:ring-2 focus:ring-accent-blue/10"
                     type="number"
                     value={draft.height}
                     onChange={(e) => setDraft({ ...draft, height: Number(e.target.value) || 0 })}
@@ -363,22 +363,22 @@ export function RenderPresetEditorPage() {
               </div>
             </div>
 
-            <div className="rounded-3xl border border-stroke bg-bg-primary/40 p-4 space-y-4">
-              <label className="flex items-center gap-3 text-sm font-semibold text-text-primary">
+            <div className="rounded-xl border border-stroke bg-bg-primary/40 p-4 space-y-4">
+              <label className="flex items-center gap-3 text-sm font-semibold text-text-primary cursor-pointer select-none">
                 <input
                   checked={draft.hiresEnabled}
-                  className="h-4 w-4 accent-[#5ea4ff]"
+                  className="h-4 w-4 rounded border-stroke accent-accent-blue"
                   type="checkbox"
                   onChange={(e) => setDraft({ ...draft, hiresEnabled: e.target.checked })}
                 />
                 Hi-Res Fix
               </label>
               {draft.hiresEnabled && (
-                <div className="space-y-4">
+                <div className="space-y-4 pt-2">
                   <Field label="Upscaler 模型" hint="从 ComfyUI 获取可用上采样模型（如 4x-UltraSharp）">
                     {upscaleModels.length > 0 ? (
                       <select
-                        className="w-full rounded-2xl border border-stroke bg-bg-secondary px-4 py-3 text-sm text-text-primary outline-none transition focus:border-accent-blue"
+                        className="w-full rounded-xl border border-stroke/60 bg-bg-tertiary/50 px-4 py-2.5 hover:border-stroke-strong text-sm text-text-primary placeholder:text-text-muted outline-none transition focus:border-accent-blue focus:ring-2 focus:ring-accent-blue/10"
                         value={draft.hiresUpscaler}
                         onChange={(e) => setDraft({ ...draft, hiresUpscaler: e.target.value })}
                       >
@@ -389,7 +389,7 @@ export function RenderPresetEditorPage() {
                       </select>
                     ) : (
                       <input
-                        className="w-full rounded-2xl border border-stroke bg-bg-secondary px-4 py-3 text-sm text-text-primary outline-none transition focus:border-accent-blue"
+                        className="w-full rounded-xl border border-stroke/60 bg-bg-tertiary/50 px-4 py-2.5 hover:border-stroke-strong text-sm text-text-primary placeholder:text-text-muted outline-none transition focus:border-accent-blue focus:ring-2 focus:ring-accent-blue/10"
                         value={draft.hiresUpscaler}
                         placeholder="无法连接 ComfyUI，手动输入（如 4x-UltraSharp.pth）"
                         onChange={(e) => setDraft({ ...draft, hiresUpscaler: e.target.value })}
@@ -399,7 +399,7 @@ export function RenderPresetEditorPage() {
                   <div className="grid gap-4 md:grid-cols-4">
                     <Field label="Steps">
                       <input
-                        className="w-full rounded-2xl border border-stroke bg-bg-secondary px-4 py-3 text-sm text-text-primary outline-none transition focus:border-accent-blue"
+                        className="w-full rounded-xl border border-stroke/60 bg-bg-tertiary/50 px-4 py-2.5 hover:border-stroke-strong text-sm text-text-primary placeholder:text-text-muted outline-none transition focus:border-accent-blue focus:ring-2 focus:ring-accent-blue/10"
                         type="number"
                         value={draft.hiresSteps}
                         onChange={(e) => setDraft({ ...draft, hiresSteps: Number(e.target.value) || 0 })}
@@ -407,7 +407,7 @@ export function RenderPresetEditorPage() {
                     </Field>
                     <Field label="Upscale 倍数">
                       <input
-                        className="w-full rounded-2xl border border-stroke bg-bg-secondary px-4 py-3 text-sm text-text-primary outline-none transition focus:border-accent-blue"
+                        className="w-full rounded-xl border border-stroke/60 bg-bg-tertiary/50 px-4 py-2.5 hover:border-stroke-strong text-sm text-text-primary placeholder:text-text-muted outline-none transition focus:border-accent-blue focus:ring-2 focus:ring-accent-blue/10"
                         type="number"
                         step="0.1"
                         value={draft.hiresUpscale}
@@ -416,7 +416,7 @@ export function RenderPresetEditorPage() {
                     </Field>
                     <Field label="Denoise">
                       <input
-                        className="w-full rounded-2xl border border-stroke bg-bg-secondary px-4 py-3 text-sm text-text-primary outline-none transition focus:border-accent-blue"
+                        className="w-full rounded-xl border border-stroke/60 bg-bg-tertiary/50 px-4 py-2.5 hover:border-stroke-strong text-sm text-text-primary placeholder:text-text-muted outline-none transition focus:border-accent-blue focus:ring-2 focus:ring-accent-blue/10"
                         type="number"
                         step="0.05"
                         value={draft.hiresDenoise}
@@ -425,7 +425,7 @@ export function RenderPresetEditorPage() {
                     </Field>
                     <Field label="CFG Scale">
                       <input
-                        className="w-full rounded-2xl border border-stroke bg-bg-secondary px-4 py-3 text-sm text-text-primary outline-none transition focus:border-accent-blue"
+                        className="w-full rounded-xl border border-stroke/60 bg-bg-tertiary/50 px-4 py-2.5 hover:border-stroke-strong text-sm text-text-primary placeholder:text-text-muted outline-none transition focus:border-accent-blue focus:ring-2 focus:ring-accent-blue/10"
                         type="number"
                         step="0.1"
                         value={draft.hiresCfgScale}
@@ -437,7 +437,7 @@ export function RenderPresetEditorPage() {
               )}
             </div>
 
-            <div className="rounded-3xl border border-stroke bg-bg-primary/40 p-4 space-y-4">
+            <div className="rounded-xl border border-stroke bg-bg-primary/40 p-4 space-y-4">
               <h3 className="text-sm font-semibold text-text-primary">LLM Prompt Writer 系统提示</h3>
               <p className="text-xs text-text-muted">
                 当 Prompt 模式为「LLM 写手」时，此提示控制 LLM 如何将角色/场景素材写成聚焦的 SD prompt。
@@ -445,7 +445,7 @@ export function RenderPresetEditorPage() {
               </p>
               <Field label="系统提示" hint="英文。控制 LLM 输出的 prompt 风格、长度、角色描述策略">
                 <textarea
-                  className="min-h-64 w-full rounded-2xl border border-stroke bg-bg-secondary px-4 py-3 font-mono text-xs text-text-primary outline-none transition focus:border-accent-blue"
+                  className="min-h-64 w-full rounded-xl border border-stroke/60 bg-bg-tertiary/50 px-4 py-2.5 hover:border-stroke-strong font-mono text-xs text-text-primary placeholder:text-text-muted outline-none transition focus:border-accent-blue focus:ring-2 focus:ring-accent-blue/10"
                   placeholder={DEFAULT_PROMPT_WRITER_PROMPT}
                   value={draft.promptWriterPrompt}
                   onChange={(e) => setDraft({ ...draft, promptWriterPrompt: e.target.value })}

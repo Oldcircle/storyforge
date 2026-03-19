@@ -224,7 +224,7 @@ export default function App() {
           activeKey={activeSidebarKey}
           onNavigate={(hash) => navigate(hash)}
         />
-        <main className="flex-1 p-4 md:p-6">{content}</main>
+        <main className="flex-1 p-4 md:p-8 md:pt-6">{content}</main>
       </div>
     </div>
   );

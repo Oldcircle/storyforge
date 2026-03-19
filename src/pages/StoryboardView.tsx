@@ -61,7 +61,7 @@ export function StoryboardViewPage({ project }: StoryboardViewPageProps) {
   if (!project) {
     return (
       <Panel title="未选择项目" subtitle="先从 Dashboard 进入一个项目工作区。">
-        <div className="rounded-2xl border border-dashed border-stroke p-6 text-sm text-text-muted">
+        <div className="rounded-2xl border border-dashed border-stroke/60 bg-bg-primary/30 p-8 text-sm text-text-muted">
           还没有活动项目，暂时无法生成分镜。
         </div>
       </Panel>
@@ -93,19 +93,19 @@ export function StoryboardViewPage({ project }: StoryboardViewPageProps) {
             </Field>
 
             <div className="grid gap-3 md:grid-cols-3">
-              <div className="rounded-2xl border border-stroke bg-bg-primary/70 p-4">
+              <div className="rounded-xl border border-stroke/50 bg-bg-primary/50 p-4 shadow-inner">
                 <div className="text-xs uppercase tracking-[0.2em] text-text-muted">角色</div>
                 <div className="mt-2 text-lg font-semibold text-text-primary">
                   {linkedCharacters.length}
                 </div>
               </div>
-              <div className="rounded-2xl border border-stroke bg-bg-primary/70 p-4">
+              <div className="rounded-xl border border-stroke/50 bg-bg-primary/50 p-4 shadow-inner">
                 <div className="text-xs uppercase tracking-[0.2em] text-text-muted">场景书</div>
                 <div className="mt-2 text-sm font-semibold text-text-primary">
                   {sceneBook?.name ?? "未绑定"}
                 </div>
               </div>
-              <div className="rounded-2xl border border-stroke bg-bg-primary/70 p-4">
+              <div className="rounded-xl border border-stroke/50 bg-bg-primary/50 p-4 shadow-inner">
                 <div className="text-xs uppercase tracking-[0.2em] text-text-muted">预设</div>
                 <div className="mt-2 text-sm font-semibold text-text-primary">
                   {preset?.name ?? "未绑定"}
@@ -114,31 +114,31 @@ export function StoryboardViewPage({ project }: StoryboardViewPageProps) {
             </div>
 
             {error ? (
-              <div className="rounded-2xl border border-rose-400/30 bg-rose-400/10 p-4 text-sm text-text-secondary">
+              <div className="rounded-xl border border-accent-rose/20 bg-accent-rose/5 p-4 text-sm text-text-secondary">
                 {error}
               </div>
             ) : null}
 
             {!preset ? (
-              <div className="rounded-2xl border border-amber-300/30 bg-amber-300/10 p-4 text-sm text-text-secondary">
+              <div className="rounded-xl border border-accent-amber/20 bg-accent-amber/5 p-4 text-sm text-text-secondary">
                 当前项目没有绑定导演预设，先在项目总览里选一个预设。
               </div>
             ) : null}
 
             {linkedCharacters.length === 0 ? (
-              <div className="rounded-2xl border border-amber-300/30 bg-amber-300/10 p-4 text-sm text-text-secondary">
+              <div className="rounded-xl border border-accent-amber/20 bg-accent-amber/5 p-4 text-sm text-text-secondary">
                 当前项目没有关联角色卡，导演模型暂时不知道有哪些角色可用。
               </div>
             ) : null}
 
             {requiresApiKey && !settings.llmApiKey.trim() ? (
-              <div className="rounded-2xl border border-amber-300/30 bg-amber-300/10 p-4 text-sm text-text-secondary">
+              <div className="rounded-xl border border-accent-amber/20 bg-accent-amber/5 p-4 text-sm text-text-secondary">
                 还没有配置 LLM API Key，请先去 Settings 填写。
               </div>
             ) : null}
 
             <button
-              className="rounded-full bg-accent-blue px-5 py-3 text-sm font-semibold text-white transition hover:brightness-110 disabled:cursor-not-allowed disabled:opacity-50"
+              className="rounded-xl bg-accent-blue px-4 py-2.5 text-sm font-medium text-white shadow-lg shadow-accent-blue/20 transition hover:bg-accent-blue/90 disabled:opacity-50 disabled:shadow-none"
               disabled={!canGenerate || loading}
               onClick={() => {
                 if (!preset) {
@@ -159,7 +159,7 @@ export function StoryboardViewPage({ project }: StoryboardViewPageProps) {
           </div>
 
           <div className="space-y-4">
-            <div className="rounded-3xl border border-stroke bg-bg-primary/60 p-4">
+            <div className="rounded-xl border border-stroke bg-bg-primary/60 p-4">
               <div className="text-sm font-semibold text-text-primary">最近一次 Prompt 预览</div>
               <div className="mt-3 space-y-3">
                 {lastPromptMessages.length === 0 ? (
@@ -186,7 +186,7 @@ export function StoryboardViewPage({ project }: StoryboardViewPageProps) {
         <Panel title="分镜记录" subtitle="当前项目下已保存的结构化分镜。">
           <div className="space-y-2">
             {storyboards.length === 0 ? (
-              <div className="rounded-2xl border border-dashed border-stroke p-4 text-sm text-text-muted">
+              <div className="rounded-2xl border border-dashed border-stroke/60 bg-bg-primary/30 p-6 text-sm text-text-muted">
                 还没有分镜记录，先生成第一条。
               </div>
             ) : null}
@@ -218,18 +218,18 @@ export function StoryboardViewPage({ project }: StoryboardViewPageProps) {
           }
         >
           {!selected ? (
-            <div className="rounded-2xl border border-dashed border-stroke p-6 text-sm text-text-muted">
+            <div className="rounded-2xl border border-dashed border-stroke/60 bg-bg-primary/30 p-8 text-sm text-text-muted">
               当前还没有选中的分镜。
             </div>
           ) : (
             <div className="space-y-4">
-              <div className="rounded-2xl border border-stroke bg-bg-primary/60 p-4 text-sm text-text-secondary">
+              <div className="rounded-xl border border-stroke bg-bg-primary/60 p-4 text-sm text-text-secondary">
                 <div className="font-semibold text-text-primary">原始输入</div>
                 <p className="mt-2">{selected.userPrompt}</p>
               </div>
 
               {selected.shots.map((shot) => (
-                <div key={shot.id} className="rounded-3xl border border-stroke bg-bg-primary/70 p-4">
+                <div key={shot.id} className="rounded-xl border border-stroke/50 bg-bg-primary/50 p-4 shadow-inner">
                   <div className="flex items-start justify-between gap-4">
                     <div>
                       <div className="text-xs uppercase tracking-[0.2em] text-text-muted">
@@ -276,7 +276,7 @@ export function StoryboardViewPage({ project }: StoryboardViewPageProps) {
               ))}
 
               {lastRawResponse ? (
-                <div className="rounded-3xl border border-stroke bg-bg-primary/60 p-4">
+                <div className="rounded-xl border border-stroke bg-bg-primary/60 p-4">
                   <div className="text-sm font-semibold text-text-primary">最近一次原始模型输出</div>
                   <pre className="mt-3 overflow-x-auto whitespace-pre-wrap font-mono text-xs text-text-secondary">
                     {lastRawResponse}

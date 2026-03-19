@@ -6,10 +6,10 @@ interface HeaderProps {
 
 export function Header({ projectName, onOpenDashboard, onOpenSettings }: HeaderProps) {
   return (
-    <header className="sticky top-0 z-40 border-b border-stroke/90 bg-bg-primary/90 backdrop-blur-md">
+    <header className="sticky top-0 z-40 border-b border-stroke/40 bg-bg-primary/60 backdrop-blur-2xl">
       <div className="flex h-16 items-center justify-between px-6">
-        <button className="flex items-center gap-3 text-left" onClick={onOpenDashboard}>
-          <div className="flex h-10 w-10 items-center justify-center rounded-2xl border border-stroke bg-bg-secondary text-sm font-bold text-accent-mint">
+        <button className="flex items-center gap-3 text-left group" onClick={onOpenDashboard}>
+          <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-gradient-to-br from-accent-blue to-accent-blue/70 text-sm font-bold text-white shadow-lg shadow-accent-blue/20 transition-transform group-hover:scale-105">
             SF
           </div>
           <div>
@@ -23,7 +23,7 @@ export function Header({ projectName, onOpenDashboard, onOpenSettings }: HeaderP
         </button>
 
         <button
-          className="rounded-full border border-stroke bg-bg-secondary px-4 py-2 text-sm text-text-secondary transition hover:border-stroke-strong hover:text-text-primary"
+          className="rounded-xl border border-stroke/60 bg-bg-tertiary/30 px-4 py-2.5 text-sm text-text-secondary transition hover:border-stroke hover:bg-bg-tertiary hover:text-text-primary hover:shadow-sm"
           onClick={onOpenSettings}
         >
           Settings

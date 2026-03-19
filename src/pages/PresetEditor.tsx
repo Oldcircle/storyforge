@@ -81,7 +81,7 @@ export function PresetEditorPage() {
         actions={
           <div className="flex gap-2">
             <button
-              className="rounded-full border border-stroke px-4 py-2 text-sm text-text-secondary transition hover:text-text-primary"
+              className="rounded-xl border border-stroke/60 bg-bg-tertiary/30 px-4 py-2.5 text-sm text-text-secondary transition hover:border-stroke hover:bg-bg-tertiary hover:text-text-primary hover:shadow-sm"
               onClick={() => importFileRef.current?.click()}
             >
               导入 JSON
@@ -94,7 +94,7 @@ export function PresetEditorPage() {
               onChange={(e) => void handleImportJSON(e)}
             />
             <button
-              className="rounded-full bg-accent-blue px-4 py-2 text-sm font-medium text-white transition hover:brightness-110"
+              className="rounded-xl bg-accent-blue px-4 py-2.5 text-sm font-medium text-white shadow-lg shadow-accent-blue/20 transition hover:bg-accent-blue/90 disabled:opacity-50 disabled:shadow-none"
               onClick={() => void createPreset().then(selectPreset)}
             >
               新建预设
@@ -118,7 +118,7 @@ export function PresetEditorPage() {
             </button>
           ))}
           {presets.length === 0 ? (
-            <div className="rounded-2xl border border-dashed border-stroke p-4 text-sm text-text-muted">
+            <div className="rounded-2xl border border-dashed border-stroke/60 bg-bg-primary/30 p-6 text-sm text-text-muted">
               还没有导演预设，先创建一个默认预设。
             </div>
           ) : null}
@@ -132,13 +132,13 @@ export function PresetEditorPage() {
           selected ? (
             <div className="flex gap-2">
               <button
-                className="rounded-full border border-stroke px-4 py-2 text-sm text-text-secondary transition hover:text-text-primary"
+                className="rounded-xl border border-stroke/60 bg-bg-tertiary/30 px-4 py-2.5 text-sm text-text-secondary transition hover:border-stroke hover:bg-bg-tertiary hover:text-text-primary hover:shadow-sm"
                 onClick={() => void removePreset(selected.id)}
               >
                 删除
               </button>
               <button
-                className="rounded-full bg-accent-mint px-4 py-2 text-sm font-medium text-white transition hover:brightness-110"
+                className="rounded-xl bg-accent-mint px-4 py-2.5 text-sm font-medium text-white shadow-lg shadow-accent-mint/20 transition hover:bg-accent-mint/90"
                 onClick={() => void handleSave()}
               >
                 保存
@@ -148,28 +148,28 @@ export function PresetEditorPage() {
         }
       >
         {!draft ? (
-          <div className="rounded-2xl border border-dashed border-stroke p-6 text-sm text-text-muted">
+          <div className="rounded-2xl border border-dashed border-stroke/60 bg-bg-primary/30 p-8 text-sm text-text-muted">
             选择左侧预设后开始编辑。
           </div>
         ) : (
           <div className="grid gap-4 md:grid-cols-2">
             <Field label="名称">
               <input
-                className="w-full rounded-2xl border border-stroke bg-bg-primary px-4 py-3 text-sm text-text-primary outline-none transition focus:border-accent-blue"
+                className="w-full rounded-xl border border-stroke/60 bg-bg-tertiary/50 px-4 py-2.5 hover:border-stroke-strong text-sm text-text-primary placeholder:text-text-muted outline-none transition focus:border-accent-blue focus:ring-2 focus:ring-accent-blue/10"
                 value={draft.name}
                 onChange={(event) => setDraft({ ...draft, name: event.target.value })}
               />
             </Field>
             <Field label="模型">
               <input
-                className="w-full rounded-2xl border border-stroke bg-bg-primary px-4 py-3 text-sm text-text-primary outline-none transition focus:border-accent-blue"
+                className="w-full rounded-xl border border-stroke/60 bg-bg-tertiary/50 px-4 py-2.5 hover:border-stroke-strong text-sm text-text-primary placeholder:text-text-muted outline-none transition focus:border-accent-blue focus:ring-2 focus:ring-accent-blue/10"
                 value={draft.model}
                 onChange={(event) => setDraft({ ...draft, model: event.target.value })}
               />
             </Field>
             <Field label="Temperature">
               <input
-                className="w-full rounded-2xl border border-stroke bg-bg-primary px-4 py-3 text-sm text-text-primary outline-none transition focus:border-accent-blue"
+                className="w-full rounded-xl border border-stroke/60 bg-bg-tertiary/50 px-4 py-2.5 hover:border-stroke-strong text-sm text-text-primary placeholder:text-text-muted outline-none transition focus:border-accent-blue focus:ring-2 focus:ring-accent-blue/10"
                 type="number"
                 step="0.1"
                 value={draft.temperature}
@@ -180,7 +180,7 @@ export function PresetEditorPage() {
             </Field>
             <Field label="Max Tokens">
               <input
-                className="w-full rounded-2xl border border-stroke bg-bg-primary px-4 py-3 text-sm text-text-primary outline-none transition focus:border-accent-blue"
+                className="w-full rounded-xl border border-stroke/60 bg-bg-tertiary/50 px-4 py-2.5 hover:border-stroke-strong text-sm text-text-primary placeholder:text-text-muted outline-none transition focus:border-accent-blue focus:ring-2 focus:ring-accent-blue/10"
                 type="number"
                 value={draft.maxTokens}
                 onChange={(event) =>
@@ -190,7 +190,7 @@ export function PresetEditorPage() {
             </Field>
             <Field label="默认生图适配器">
               <select
-                className="w-full rounded-2xl border border-stroke bg-bg-primary px-4 py-3 text-sm text-text-primary outline-none transition focus:border-accent-blue"
+                className="w-full rounded-xl border border-stroke/60 bg-bg-tertiary/50 px-4 py-2.5 hover:border-stroke-strong text-sm text-text-primary placeholder:text-text-muted outline-none transition focus:border-accent-blue focus:ring-2 focus:ring-accent-blue/10"
                 value={draft.defaultImageAdapter}
                 onChange={(event) =>
                   setDraft({ ...draft, defaultImageAdapter: event.target.value })
@@ -204,7 +204,7 @@ export function PresetEditorPage() {
             <div className="md:col-span-2">
               <Field label="导演系统提示词" hint="使用 {{characters}} 和 {{scenes}} 占位符注入角色和场景信息">
                 <textarea
-                  className="min-h-80 w-full rounded-2xl border border-stroke bg-bg-primary px-4 py-3 text-sm text-text-primary outline-none transition focus:border-accent-blue"
+                  className="min-h-[400px] font-mono w-full rounded-xl border border-stroke/60 bg-bg-tertiary/50 px-4 py-2.5 hover:border-stroke-strong text-sm text-text-primary placeholder:text-text-muted outline-none transition focus:border-accent-blue focus:ring-2 focus:ring-accent-blue/10"
                   value={draft.systemPrompt}
                   onChange={(event) => setDraft({ ...draft, systemPrompt: event.target.value })}
                 />

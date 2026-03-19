@@ -19,11 +19,11 @@ export function ImageLightbox({ src, alt, onClose }: ImageLightboxProps) {
 
   return (
     <div
-      className="fixed inset-0 z-50 flex items-center justify-center bg-black/80 backdrop-blur-sm"
+      className="fixed inset-0 z-50 flex items-center justify-center bg-bg-primary/90 backdrop-blur-md"
       onClick={onClose}
     >
       <button
-        className="absolute right-4 top-4 rounded-full bg-white/10 p-2 text-white transition hover:bg-white/20"
+        className="absolute right-4 top-4 rounded-full bg-bg-tertiary p-2 text-text-secondary transition hover:text-text-primary"
         onClick={onClose}
         aria-label="关闭"
       >

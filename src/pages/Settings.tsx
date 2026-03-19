@@ -18,6 +18,7 @@ export function SettingsPage() {
   const [llmError, setLlmError] = useState("");
   const [comfyStatus, setComfyStatus] = useState<ConnectionStatus>("idle");
   const [comfyError, setComfyError] = useState("");
+  const [showApiKey, setShowApiKey] = useState(false);
 
   const provider = getProvider(draft.llmProviderId);
   const isCustom = draft.llmProviderId === "custom";
@@ -100,7 +101,7 @@ export function SettingsPage() {
         subtitle="配置用于导演引擎的大语言模型 API。所有 Provider 均走 OpenAI 兼容协议。"
         actions={
           <button
-            className="rounded-full bg-accent-blue px-4 py-2 text-sm font-medium text-white transition hover:brightness-110"
+            className="rounded-xl bg-accent-blue px-4 py-2.5 text-sm font-medium text-white shadow-lg shadow-accent-blue/20 transition hover:bg-accent-blue/90 disabled:opacity-50 disabled:shadow-none"
             onClick={handleSave}
           >
             {saved ? "已保存 ✓" : "保存设置"}
@@ -111,7 +112,7 @@ export function SettingsPage() {
           {/* Provider 选择 */}
           <Field label="Provider">
             <select
-              className="w-full rounded-2xl border border-stroke bg-bg-primary px-4 py-3 text-sm text-text-primary outline-none transition focus:border-accent-blue"
+              className="w-full rounded-xl border border-stroke/60 bg-bg-tertiary/50 px-4 py-2.5 hover:border-stroke-strong text-sm text-text-primary placeholder:text-text-muted outline-none transition focus:border-accent-blue focus:ring-2 focus:ring-accent-blue/10"
               value={draft.llmProviderId}
               onChange={(e) => handleProviderChange(e.target.value)}
             >
@@ -130,7 +131,7 @@ export function SettingsPage() {
           {!isCustom && provider && provider.models.length > 0 && (
             <Field label="Model">
               <select
-                className="w-full rounded-2xl border border-stroke bg-bg-primary px-4 py-3 text-sm text-text-primary outline-none transition focus:border-accent-blue"
+                className="w-full rounded-xl border border-stroke/60 bg-bg-tertiary/50 px-4 py-2.5 hover:border-stroke-strong text-sm text-text-primary placeholder:text-text-muted outline-none transition focus:border-accent-blue focus:ring-2 focus:ring-accent-blue/10"
                 value={draft.llmModel}
                 onChange={(e) => handleModelChange(e.target.value)}
               >
@@ -155,7 +156,7 @@ export function SettingsPage() {
           {isCustom && (
             <Field label="Model ID" hint="发送给 API 的模型标识符">
               <input
-                className="w-full rounded-2xl border border-stroke bg-bg-primary px-4 py-3 text-sm text-text-primary outline-none transition focus:border-accent-blue"
+                className="w-full rounded-xl border border-stroke/60 bg-bg-tertiary/50 px-4 py-2.5 hover:border-stroke-strong text-sm text-text-primary placeholder:text-text-muted outline-none transition focus:border-accent-blue focus:ring-2 focus:ring-accent-blue/10"
                 placeholder="例如: gpt-4o, claude-3-opus, qwen2.5:32b"
                 value={draft.llmCustomModelId}
                 onChange={(e) => patch({ llmCustomModelId: e.target.value })}
@@ -166,7 +167,7 @@ export function SettingsPage() {
           {/* API URL */}
           <Field label="API URL" hint="切换 Provider 时自动填充，也可手动修改（如用代理）">
             <input
-              className="w-full rounded-2xl border border-stroke bg-bg-primary px-4 py-3 text-sm text-text-primary outline-none transition focus:border-accent-blue"
+              className="w-full rounded-xl border border-stroke/60 bg-bg-tertiary/50 px-4 py-2.5 hover:border-stroke-strong text-sm text-text-primary placeholder:text-text-muted outline-none transition focus:border-accent-blue focus:ring-2 focus:ring-accent-blue/10"
               placeholder="https://api.example.com/v1"
               value={draft.llmApiUrl}
               onChange={(e) => patch({ llmApiUrl: e.target.value })}
@@ -176,36 +177,47 @@ export function SettingsPage() {
           {/* API Key（需要时才显示）*/}
           {(provider?.requiresApiKey ?? true) && (
             <Field label="API Key" hint="保存在浏览器 localStorage，不会发送到任何第三方">
-              <input
-                className="w-full rounded-2xl border border-stroke bg-bg-primary px-4 py-3 text-sm text-text-primary outline-none transition focus:border-accent-blue"
-                type="password"
-                placeholder={provider?.requiresApiKey ? "sk-..." : "可选"}
-                value={draft.llmApiKey}
-                onChange={(e) => patch({ llmApiKey: e.target.value })}
-              />
+              <div className="relative">
+                <input
+                  className="w-full rounded-xl border border-stroke/60 bg-bg-tertiary/50 px-4 py-2.5 hover:border-stroke-strong pr-12 text-sm text-text-primary placeholder:text-text-muted outline-none transition focus:border-accent-blue focus:ring-2 focus:ring-accent-blue/10"
+                  type={showApiKey ? "text" : "password"}
+                  placeholder={provider?.requiresApiKey ? "sk-..." : "可选"}
+                  value={draft.llmApiKey}
+                  onChange={(e) => patch({ llmApiKey: e.target.value })}
+                />
+                <button
+                  type="button"
+                  className="absolute right-3 top-1/2 -translate-y-1/2 text-xs text-text-muted hover:text-text-primary"
+                  onClick={() => setShowApiKey(!showApiKey)}
+                >
+                  {showApiKey ? "隐藏" : "显示"}
+                </button>
+              </div>
             </Field>
           )}
 
           {/* 测试连接 */}
-          <div className="flex items-center gap-3">
+          <div className="flex items-center gap-3 pt-2">
             <button
-              className="rounded-full border border-stroke px-4 py-2 text-sm text-text-secondary transition hover:border-accent-blue hover:text-accent-blue disabled:opacity-50"
+              className="rounded-xl border border-stroke/60 bg-bg-tertiary/30 px-4 py-2.5 text-sm text-text-secondary transition hover:border-stroke hover:bg-bg-tertiary hover:text-text-primary hover:shadow-sm"
               onClick={() => void testLLM()}
               disabled={llmStatus === "testing" || !draft.llmApiUrl.trim()}
             >
               {llmStatus === "testing" ? "测试中..." : "测试连接"}
             </button>
             {llmStatus === "success" && (
-              <span className="text-sm text-accent-green">连接成功 ✓</span>
+              <span className="rounded-lg bg-accent-mint/10 border border-accent-mint/20 px-3 py-1 text-xs text-accent-mint">连接成功</span>
             )}
             {llmStatus === "error" && (
-              <span className="text-sm text-accent-red" title={llmError}>
+              <span className="rounded-lg bg-accent-rose/5 border border-accent-rose/20 px-3 py-1 text-xs text-accent-rose" title={llmError}>
                 连接失败 — {llmError.length > 80 ? llmError.slice(0, 80) + "..." : llmError}
               </span>
             )}
           </div>
         </div>
       </Panel>
+
+      <div className="my-8 h-px bg-stroke/50" />
 
       {/* ComfyUI 设置 */}
       <Panel
@@ -215,25 +227,25 @@ export function SettingsPage() {
         <div className="space-y-4">
           <Field label="ComfyUI URL">
             <input
-              className="w-full rounded-2xl border border-stroke bg-bg-primary px-4 py-3 text-sm text-text-primary outline-none transition focus:border-accent-blue"
+              className="w-full rounded-xl border border-stroke/60 bg-bg-tertiary/50 px-4 py-2.5 hover:border-stroke-strong text-sm text-text-primary placeholder:text-text-muted outline-none transition focus:border-accent-blue focus:ring-2 focus:ring-accent-blue/10"
               placeholder="http://127.0.0.1:8188"
               value={draft.comfyuiUrl}
               onChange={(e) => patch({ comfyuiUrl: e.target.value })}
             />
           </Field>
-          <div className="flex items-center gap-3">
+          <div className="flex items-center gap-3 pt-2">
             <button
-              className="rounded-full border border-stroke px-4 py-2 text-sm text-text-secondary transition hover:border-accent-blue hover:text-accent-blue disabled:opacity-50"
+              className="rounded-xl border border-stroke/60 bg-bg-tertiary/30 px-4 py-2.5 text-sm text-text-secondary transition hover:border-stroke hover:bg-bg-tertiary hover:text-text-primary hover:shadow-sm"
               onClick={() => void testComfyUI()}
               disabled={comfyStatus === "testing" || !draft.comfyuiUrl.trim()}
             >
               {comfyStatus === "testing" ? "测试中..." : "测试连接"}
             </button>
             {comfyStatus === "success" && (
-              <span className="text-sm text-accent-green">连接成功 ✓</span>
+              <span className="rounded-lg bg-accent-mint/10 border border-accent-mint/20 px-3 py-1 text-xs text-accent-mint">连接成功</span>
             )}
             {comfyStatus === "error" && (
-              <span className="text-sm text-accent-red" title={comfyError}>
+              <span className="rounded-lg bg-accent-rose/5 border border-accent-rose/20 px-3 py-1 text-xs text-accent-rose" title={comfyError}>
                 连接失败 — {comfyError.length > 80 ? comfyError.slice(0, 80) + "..." : comfyError}
               </span>
             )}

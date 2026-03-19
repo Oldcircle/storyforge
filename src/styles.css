@@ -1,17 +1,18 @@
 @import "tailwindcss";
 
 :root {
-  color: #f4f4f5;
-  background:
-    radial-gradient(circle at top left, rgba(94, 164, 255, 0.14), transparent 28%),
-    radial-gradient(circle at top right, rgba(93, 228, 199, 0.12), transparent 24%),
-    linear-gradient(180deg, #0f1117 0%, #111522 56%, #0d1018 100%);
-  font-family: "Space Grotesk", "Segoe UI", sans-serif;
+  color: #e2e8f0;
+  background-color: #09090e;
+  background-image: 
+    radial-gradient(circle at 15% 50%, rgba(99, 102, 241, 0.06), transparent 25%),
+    radial-gradient(circle at 85% 30%, rgba(16, 185, 129, 0.05), transparent 25%),
+    radial-gradient(circle at 50% 0%, rgba(99, 102, 241, 0.03), transparent 30%);
+  background-attachment: fixed;
+  font-family: "Inter", "Segoe UI", system-ui, sans-serif;
+  -webkit-font-smoothing: antialiased;
 }
 
-html,
-body,
-#root {
+html, body, #root {
   min-height: 100%;
 }
 
@@ -19,9 +20,19 @@ body {
   margin: 0;
 }
 
-button,
-input,
-textarea,
-select {
+button, input, textarea, select {
   font: inherit;
+}
+
+/* 滚动条 */
+::-webkit-scrollbar { width: 6px; height: 6px; }
+::-webkit-scrollbar-track { background: transparent; }
+::-webkit-scrollbar-thumb { background: #1e1e2a; border-radius: 3px; }
+::-webkit-scrollbar-thumb:hover { background: #2a2a3a; }
+
+/* 去掉默认的 number input 箭头 */
+input[type="number"]::-webkit-inner-spin-button,
+input[type="number"]::-webkit-outer-spin-button {
+  -webkit-appearance: none;
+  margin: 0;
 }
