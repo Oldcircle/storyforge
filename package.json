@@ -7,6 +7,11 @@
     "dev": "vite --port 5174",
     "build": "tsc && vite build",
     "check": "tsc --noEmit",
+    "test": "vitest run",
+    "test:watch": "vitest",
+    "test:coverage": "vitest run --coverage",
+    "lint": "oxlint src/",
+    "ci": "npm run check && npm run lint && npm run test",
     "preview": "vite preview"
   },
   "dependencies": {
@@ -25,7 +30,11 @@
     "@types/react-dom": "^18.2.17",
     "@types/uuid": "^10.0.0",
     "@vitejs/plugin-react": "^4.2.1",
+    "@vitest/coverage-v8": "^4.1.0",
+    "happy-dom": "^20.8.4",
+    "oxlint": "^1.56.0",
     "typescript": "^5.9.2",
-    "vite": "^7.3.1"
+    "vite": "^7.3.1",
+    "vitest": "^4.1.0"
   }
 }

@@ -11,6 +11,7 @@ type CharacterStore = {
   loadAll: () => Promise<void>;
   select: (id: string) => Promise<void>;
   create: (initial?: Partial<CharacterCard>) => Promise<string>;
+  createFromData: (character: CharacterCard) => Promise<void>;
   update: (id: string, data: Partial<CharacterCard>) => Promise<void>;
   remove: (id: string) => Promise<void>;
   clearSelection: () => void;
@@ -49,6 +50,10 @@ export const useCharacterStore = create<CharacterStore>((set, get) => ({
     const characters = await fetchCharacters();
     set({ characters, selected: character });
     return character.id;
+  },
+  createFromData: async (character) => {
+    await db.characters.add(character);
+    set({ characters: await fetchCharacters() });
   },
   update: async (id, data) => {
     await db.characters.update(id, { ...data, updatedAt: Date.now() });

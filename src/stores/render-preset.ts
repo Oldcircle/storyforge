@@ -8,6 +8,7 @@ type RenderPresetStore = {
   selected: RenderPreset | null;
   loadAll: () => Promise<void>;
   create: (overrides?: Partial<RenderPreset>) => Promise<string>;
+  createFromData: (preset: RenderPreset) => Promise<void>;
   select: (id: string) => Promise<void>;
   update: (id: string, patch: Partial<RenderPreset>) => Promise<void>;
   remove: (id: string) => Promise<void>;
@@ -32,6 +33,11 @@ export const useRenderPresetStore = create<RenderPresetStore>((set, get) => ({
     await db.renderPresets.put(preset);
     await get().loadAll();
     return preset.id;
+  },
+
+  createFromData: async (preset) => {
+    await db.renderPresets.put(preset);
+    await get().loadAll();
   },
 
   select: async (id) => {

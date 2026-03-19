@@ -1,29 +1,35 @@
 import { useEffect, useMemo, useRef, useState } from "react";
 import { Field } from "../components/common/Field";
+import { ImageUpload } from "../components/common/ImageUpload";
 import { Panel } from "../components/common/Panel";
 import { useSceneStore } from "../stores/scene";
 import type { SceneBook, SceneEntry, SceneEntryUsage } from "../types/scene";
 import { downloadTextFile, exportSceneBook, importSceneBook } from "../utils/import-export";
 import { importSceneBookFromSTWorld } from "../utils/import-st";
 
+type DraftEntry = {
+  id: string;
+  name: string;
+  usage: SceneEntryUsage;
+  keywords: string;
+  secondaryKeywords: string;
+  directorContext: string;
+  environmentPrompt: string;
+  negativePrompt: string;
+  lighting: string;
+  atmosphere: string;
+  weather: string;
+  referenceImages: string[];
+  insertionOrder: number;
+  enabled: boolean;
+  useRegex: boolean;
+  alwaysActive: boolean;
+};
+
 type DraftBook = {
   name: string;
   description: string;
-  entries: Array<{
-    id: string;
-    name: string;
-    usage: SceneEntryUsage;
-    keywords: string;
-    secondaryKeywords: string;
-    directorContext: string;
-    environmentPrompt: string;
-    lighting: string;
-    atmosphere: string;
-    insertionOrder: number;
-    enabled: boolean;
-    useRegex: boolean;
-    alwaysActive: boolean;
-  }>;
+  entries: DraftEntry[];
 };
 
 function toDraft(book: SceneBook): DraftBook {
@@ -39,8 +45,11 @@ function toDraft(book: SceneBook): DraftBook {
       secondaryKeywords: (entry.secondaryKeywords ?? []).join(", "),
       directorContext: entry.content.directorContext ?? "",
       environmentPrompt: entry.content.environmentPrompt,
+      negativePrompt: entry.content.negativePrompt ?? "",
       lighting: entry.content.lighting ?? "",
       atmosphere: entry.content.atmosphere ?? "",
+      weather: entry.content.weather ?? "",
+      referenceImages: entry.referenceImages ?? [],
       insertionOrder: entry.insertionOrder,
       enabled: entry.enabled,
       useRegex: Boolean(entry.useRegex),
@@ -49,7 +58,7 @@ function toDraft(book: SceneBook): DraftBook {
   };
 }
 
-function toEntry(entry: DraftBook["entries"][number]): SceneEntry {
+function toEntry(entry: DraftEntry): SceneEntry {
   return {
     id: entry.id,
     name: entry.name,
@@ -68,15 +77,47 @@ function toEntry(entry: DraftBook["entries"][number]): SceneEntry {
     content: {
       directorContext: entry.directorContext,
       environmentPrompt: entry.environmentPrompt,
-      negativePrompt: "",
+      negativePrompt: entry.negativePrompt,
       props: [],
       atmosphere: entry.atmosphere,
       lighting: entry.lighting,
       timeOfDay: "",
-      weather: ""
+      weather: entry.weather
     },
-    referenceImages: [],
+    referenceImages: entry.referenceImages,
     insertionOrder: entry.insertionOrder
+  };
+}
+
+function updateEntry(draft: DraftBook, entryId: string, updates: Partial<DraftEntry>): DraftBook {
+  return {
+    ...draft,
+    entries: draft.entries.map((item) =>
+      item.id === entryId ? { ...item, ...updates } : item,
+    ),
+  };
+}
+
+function swapEntryOrder(draft: DraftBook, entryId: string, direction: "up" | "down"): DraftBook {
+  const sorted = [...draft.entries].sort((a, b) => a.insertionOrder - b.insertionOrder);
+  const idx = sorted.findIndex((e) => e.id === entryId);
+  if (idx < 0) return draft;
+  const swapIdx = direction === "up" ? idx - 1 : idx + 1;
+  if (swapIdx < 0 || swapIdx >= sorted.length) return draft;
+
+  const orderA = sorted[idx].insertionOrder;
+  const orderB = sorted[swapIdx].insertionOrder;
+  // If they have the same order, nudge by 1
+  const newOrderA = orderA === orderB ? (direction === "up" ? orderB - 1 : orderB + 1) : orderB;
+  const newOrderB = orderA === orderB ? orderA : orderA;
+
+  return {
+    ...draft,
+    entries: draft.entries.map((item) => {
+      if (item.id === sorted[idx].id) return { ...item, insertionOrder: newOrderA };
+      if (item.id === sorted[swapIdx].id) return { ...item, insertionOrder: newOrderB };
+      return item;
+    }),
   };
 }
 
@@ -287,29 +328,52 @@ export function SceneEditorPage() {
                 </button>
               </div>
 
-              {sortedEntries.map((entry) => (
+              {sortedEntries.map((entry, sortedIndex) => (
                 <div key={entry.id} className="rounded-3xl border border-stroke bg-bg-primary/70 p-4">
                   <div className="mb-3 flex items-start justify-between gap-4">
+                    <div className="flex items-center gap-2">
+                      <div className="flex flex-col gap-0.5">
+                        <button
+                          className="rounded px-1.5 py-0.5 text-xs text-text-muted transition hover:bg-bg-secondary hover:text-text-primary disabled:opacity-30"
+                          disabled={sortedIndex === 0}
+                          title="上移"
+                          onClick={() => setDraft(swapEntryOrder(draft, entry.id, "up"))}
+                        >
+                          ▲
+                        </button>
+                        <button
+                          className="rounded px-1.5 py-0.5 text-xs text-text-muted transition hover:bg-bg-secondary hover:text-text-primary disabled:opacity-30"
+                          disabled={sortedIndex === sortedEntries.length - 1}
+                          title="下移"
+                          onClick={() => setDraft(swapEntryOrder(draft, entry.id, "down"))}
+                        >
+                          ▼
+                        </button>
+                      </div>
+                      <label className="flex items-center gap-2">
+                        <input
+                          checked={entry.enabled}
+                          className="h-4 w-4 accent-[#5ea4ff]"
+                          type="checkbox"
+                          onChange={(event) =>
+                            setDraft(updateEntry(draft, entry.id, { enabled: event.target.checked }))
+                          }
+                        />
+                      </label>
+                    </div>
                     <div className="flex-1">
                       <input
                         className="w-full rounded-2xl border border-stroke bg-bg-secondary px-4 py-3 text-sm text-text-primary outline-none transition focus:border-accent-blue"
                         value={entry.name}
                         onChange={(event) =>
-                          setDraft({
-                            ...draft,
-                            entries: draft.entries.map((item) =>
-                              item.id === entry.id ? { ...item, name: event.target.value } : item,
-                            )
-                          })
+                          setDraft(updateEntry(draft, entry.id, { name: event.target.value }))
                         }
                       />
                     </div>
                     <button
                       className="rounded-full border border-stroke px-3 py-2 text-xs text-text-secondary transition hover:text-text-primary"
                       onClick={() => {
-                        if (!selected) {
-                          return;
-                        }
+                        if (!selected) return;
                         void removeEntry(selected.id, entry.id);
                       }}
                     >
@@ -317,33 +381,21 @@ export function SceneEditorPage() {
                     </button>
                   </div>
                   <div className="grid gap-3 md:grid-cols-2">
-                    <Field label="关键词">
+                    <Field label="关键词" hint="逗号分隔，任一匹配即触发">
                       <input
                         className="w-full rounded-2xl border border-stroke bg-bg-secondary px-4 py-3 text-sm text-text-primary outline-none transition focus:border-accent-blue"
                         value={entry.keywords}
                         onChange={(event) =>
-                          setDraft({
-                            ...draft,
-                            entries: draft.entries.map((item) =>
-                              item.id === entry.id ? { ...item, keywords: event.target.value } : item,
-                            )
-                          })
+                          setDraft(updateEntry(draft, entry.id, { keywords: event.target.value }))
                         }
                       />
                     </Field>
-                    <Field label="次要关键词">
+                    <Field label="次要关键词" hint="全部匹配才触发（AND）">
                       <input
                         className="w-full rounded-2xl border border-stroke bg-bg-secondary px-4 py-3 text-sm text-text-primary outline-none transition focus:border-accent-blue"
                         value={entry.secondaryKeywords}
                         onChange={(event) =>
-                          setDraft({
-                            ...draft,
-                            entries: draft.entries.map((item) =>
-                              item.id === entry.id
-                                ? { ...item, secondaryKeywords: event.target.value }
-                                : item,
-                            )
-                          })
+                          setDraft(updateEntry(draft, entry.id, { secondaryKeywords: event.target.value }))
                         }
                       />
                     </Field>
@@ -352,14 +404,7 @@ export function SceneEditorPage() {
                         className="w-full rounded-2xl border border-stroke bg-bg-secondary px-4 py-3 text-sm text-text-primary outline-none transition focus:border-accent-blue"
                         value={entry.usage}
                         onChange={(event) =>
-                          setDraft({
-                            ...draft,
-                            entries: draft.entries.map((item) =>
-                              item.id === entry.id
-                                ? { ...item, usage: event.target.value as SceneEntryUsage }
-                                : item,
-                            )
-                          })
+                          setDraft(updateEntry(draft, entry.id, { usage: event.target.value as SceneEntryUsage }))
                         }
                       >
                         <option value="shared">共享（导演+生图）</option>
@@ -367,112 +412,78 @@ export function SceneEditorPage() {
                         <option value="image_only">仅生图（不给 LLM）</option>
                       </select>
                     </Field>
-                    <Field label="优先级">
-                      <input
-                        className="w-full rounded-2xl border border-stroke bg-bg-secondary px-4 py-3 text-sm text-text-primary outline-none transition focus:border-accent-blue"
-                        type="number"
-                        value={entry.insertionOrder}
-                        onChange={(event) =>
-                          setDraft({
-                            ...draft,
-                            entries: draft.entries.map((item) =>
-                              item.id === entry.id
-                                ? { ...item, insertionOrder: Number(event.target.value) || 0 }
-                                : item,
-                            )
-                          })
-                        }
-                      />
-                    </Field>
-                    <label className="flex items-center gap-3 rounded-2xl border border-stroke bg-bg-secondary px-4 py-3 text-sm text-text-secondary">
-                      <input
-                        checked={entry.alwaysActive}
-                        className="h-4 w-4 accent-[#5ea4ff]"
-                        type="checkbox"
-                        onChange={(event) =>
-                          setDraft({
-                            ...draft,
-                            entries: draft.entries.map((item) =>
-                              item.id === entry.id
-                                ? { ...item, alwaysActive: event.target.checked }
-                                : item,
-                            )
-                          })
-                        }
-                      />
-                      常驻条目
-                    </label>
-                    <label className="flex items-center gap-3 rounded-2xl border border-stroke bg-bg-secondary px-4 py-3 text-sm text-text-secondary">
-                      <input
-                        checked={entry.useRegex}
-                        className="h-4 w-4 accent-[#5ea4ff]"
-                        type="checkbox"
-                        onChange={(event) =>
-                          setDraft({
-                            ...draft,
-                            entries: draft.entries.map((item) =>
-                              item.id === entry.id
-                                ? { ...item, useRegex: event.target.checked }
-                                : item,
-                            )
-                          })
-                        }
-                      />
-                      正则匹配
-                    </label>
+                    <div className="flex gap-3">
+                      <label className="flex items-center gap-3 rounded-2xl border border-stroke bg-bg-secondary px-4 py-3 text-sm text-text-secondary">
+                        <input
+                          checked={entry.alwaysActive}
+                          className="h-4 w-4 accent-[#5ea4ff]"
+                          type="checkbox"
+                          onChange={(event) =>
+                            setDraft(updateEntry(draft, entry.id, { alwaysActive: event.target.checked }))
+                          }
+                        />
+                        常驻
+                      </label>
+                      <label className="flex items-center gap-3 rounded-2xl border border-stroke bg-bg-secondary px-4 py-3 text-sm text-text-secondary">
+                        <input
+                          checked={entry.useRegex}
+                          className="h-4 w-4 accent-[#5ea4ff]"
+                          type="checkbox"
+                          onChange={(event) =>
+                            setDraft(updateEntry(draft, entry.id, { useRegex: event.target.checked }))
+                          }
+                        />
+                        正则
+                      </label>
+                    </div>
                     {entry.usage !== "image_only" && (
                       <div className="md:col-span-2">
-                        <Field label="导演上下文" hint="仅给导演 LLM 的叙事信息（剧情暗线、关系设定、世界规则），不会进入 CLIP">
+                        <Field label="导演上下文" hint="仅给导演 LLM 的叙事信息，不会进入 CLIP">
                           <textarea
                             className="min-h-16 w-full rounded-2xl border border-stroke bg-bg-secondary px-4 py-3 text-sm text-text-primary outline-none transition focus:border-accent-blue"
                             placeholder="例：这是适合旧情重逢、暧昧和压抑情绪爆发的封闭空间。"
                             value={entry.directorContext}
                             onChange={(event) =>
-                              setDraft({
-                                ...draft,
-                                entries: draft.entries.map((item) =>
-                                  item.id === entry.id
-                                    ? { ...item, directorContext: event.target.value }
-                                    : item,
-                                )
-                              })
+                              setDraft(updateEntry(draft, entry.id, { directorContext: event.target.value }))
                             }
                           />
                         </Field>
                       </div>
                     )}
                     {entry.usage !== "director_only" && (
-                      <div className="md:col-span-2">
-                        <Field label="环境 Prompt" hint="CLIP 友好的视觉描述（英文关键词），直接注入生图 prompt">
-                          <textarea
-                            className="min-h-24 w-full rounded-2xl border border-stroke bg-bg-secondary px-4 py-3 text-sm text-text-primary outline-none transition focus:border-accent-blue"
-                            placeholder="例：cozy coffee shop interior, warm yellow lighting, rain on windows"
-                            value={entry.environmentPrompt}
-                            onChange={(event) =>
-                              setDraft({
-                                ...draft,
-                                entries: draft.entries.map((item) =>
-                                  item.id === entry.id
-                                    ? { ...item, environmentPrompt: event.target.value }
-                                    : item,
-                                )
-                              })
-                            }
-                          />
-                        </Field>
-                      </div>
+                      <>
+                        <div className="md:col-span-2">
+                          <Field label="环境 Prompt" hint="CLIP 友好的视觉描述（英文关键词），直接注入生图 prompt">
+                            <textarea
+                              className="min-h-24 w-full rounded-2xl border border-stroke bg-bg-secondary px-4 py-3 text-sm text-text-primary outline-none transition focus:border-accent-blue"
+                              placeholder="例：cozy coffee shop interior, warm yellow lighting, rain on windows"
+                              value={entry.environmentPrompt}
+                              onChange={(event) =>
+                                setDraft(updateEntry(draft, entry.id, { environmentPrompt: event.target.value }))
+                              }
+                            />
+                          </Field>
+                        </div>
+                        <div className="md:col-span-2">
+                          <Field label="负面 Prompt" hint="场景级负面词，会追加到渲染预设的负面词后">
+                            <input
+                              className="w-full rounded-2xl border border-stroke bg-bg-secondary px-4 py-3 text-sm text-text-primary outline-none transition focus:border-accent-blue"
+                              placeholder="例：bright daylight, outdoor"
+                              value={entry.negativePrompt}
+                              onChange={(event) =>
+                                setDraft(updateEntry(draft, entry.id, { negativePrompt: event.target.value }))
+                              }
+                            />
+                          </Field>
+                        </div>
+                      </>
                     )}
                     <Field label="光照">
                       <input
                         className="w-full rounded-2xl border border-stroke bg-bg-secondary px-4 py-3 text-sm text-text-primary outline-none transition focus:border-accent-blue"
                         value={entry.lighting}
                         onChange={(event) =>
-                          setDraft({
-                            ...draft,
-                            entries: draft.entries.map((item) =>
-                              item.id === entry.id ? { ...item, lighting: event.target.value } : item,
-                            )
-                          })
+                          setDraft(updateEntry(draft, entry.id, { lighting: event.target.value }))
                         }
                       />
                     </Field>
@@ -481,15 +492,31 @@ export function SceneEditorPage() {
                         className="w-full rounded-2xl border border-stroke bg-bg-secondary px-4 py-3 text-sm text-text-primary outline-none transition focus:border-accent-blue"
                         value={entry.atmosphere}
                         onChange={(event) =>
-                          setDraft({
-                            ...draft,
-                            entries: draft.entries.map((item) =>
-                              item.id === entry.id ? { ...item, atmosphere: event.target.value } : item,
-                            )
-                          })
+                          setDraft(updateEntry(draft, entry.id, { atmosphere: event.target.value }))
                         }
                       />
                     </Field>
+                    <Field label="天气">
+                      <input
+                        className="w-full rounded-2xl border border-stroke bg-bg-secondary px-4 py-3 text-sm text-text-primary outline-none transition focus:border-accent-blue"
+                        placeholder="例：heavy rain, overcast"
+                        value={entry.weather}
+                        onChange={(event) =>
+                          setDraft(updateEntry(draft, entry.id, { weather: event.target.value }))
+                        }
+                      />
+                    </Field>
+                    <div className="md:col-span-2">
+                      <Field label="场景参考图" hint="用于 IP-Adapter / ControlNet 的场景参考">
+                        <ImageUpload
+                          maxImages={4}
+                          value={entry.referenceImages}
+                          onChange={(images) =>
+                            setDraft(updateEntry(draft, entry.id, { referenceImages: images }))
+                          }
+                        />
+                      </Field>
+                    </div>
                   </div>
                 </div>
               ))}

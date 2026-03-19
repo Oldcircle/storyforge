@@ -1,4 +1,4 @@
-import { useMemo, useState } from "react";
+import { useMemo, useRef, useState } from "react";
 import { Panel } from "../components/common/Panel";
 import type { Project } from "../types/project";
 
@@ -6,6 +6,7 @@ interface DashboardPageProps {
   projects: Project[];
   onCreate: (name: string, description: string) => Promise<void>;
   onOpenProject: (projectId: string) => void;
+  onImportProject?: (json: string) => Promise<void>;
 }
 
 function formatDate(timestamp: number): string {
@@ -15,10 +16,12 @@ function formatDate(timestamp: number): string {
   });
 }
 
-export function DashboardPage({ projects, onCreate, onOpenProject }: DashboardPageProps) {
+export function DashboardPage({ projects, onCreate, onOpenProject, onImportProject }: DashboardPageProps) {
   const [name, setName] = useState("");
   const [description, setDescription] = useState("");
   const [submitting, setSubmitting] = useState(false);
+  const [notice, setNotice] = useState("");
+  const importRef = useRef<HTMLInputElement>(null);
 
   const projectSummary = useMemo(() => {
     return {
@@ -85,13 +88,47 @@ export function DashboardPage({ projects, onCreate, onOpenProject }: DashboardPa
               value={description}
               onChange={(event) => setDescription(event.target.value)}
             />
-            <button
-              className="rounded-2xl bg-accent-blue px-4 py-3 text-sm font-medium text-white transition hover:brightness-110 disabled:opacity-60"
-              disabled={submitting || !name.trim()}
-              onClick={() => void handleCreate()}
-            >
-              {submitting ? "创建中..." : "创建项目"}
-            </button>
+            <div className="flex gap-2">
+              <button
+                className="flex-1 rounded-2xl bg-accent-blue px-4 py-3 text-sm font-medium text-white transition hover:brightness-110 disabled:opacity-60"
+                disabled={submitting || !name.trim()}
+                onClick={() => void handleCreate()}
+              >
+                {submitting ? "创建中..." : "创建项目"}
+              </button>
+              {onImportProject && (
+                <button
+                  className="rounded-2xl border border-stroke px-4 py-3 text-sm text-text-secondary transition hover:text-text-primary"
+                  onClick={() => importRef.current?.click()}
+                >
+                  导入项目
+                </button>
+              )}
+              <input
+                ref={importRef}
+                accept=".json,application/json"
+                className="hidden"
+                type="file"
+                onChange={(event) => {
+                  const file = event.target.files?.[0];
+                  if (file && onImportProject) {
+                    void file.text().then((text) => {
+                      void onImportProject(text).then(() => {
+                        setNotice("项目导入成功");
+                      }).catch((err: unknown) => {
+                        setNotice(err instanceof Error ? err.message : String(err));
+                      });
+                    });
+                  }
+                  event.target.value = "";
+                }}
+              />
+            </div>
+            {notice && (
+              <div className="rounded-2xl border border-accent-blue/30 bg-accent-blue/10 p-3 text-xs text-text-secondary">
+                {notice}
+              </div>
+            )}
           </div>
         </Panel>
       </div>

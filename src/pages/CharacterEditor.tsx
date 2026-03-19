@@ -17,6 +17,8 @@ type DraftCharacter = {
   styleModifiers: string;
   personality: string;
   dialogueExamples: string;
+  backstory: string;
+  creator: string;
   referenceImages: string[];
   loraName: string;
   loraWeight: number;
@@ -35,6 +37,8 @@ function toDraft(character: CharacterCard): DraftCharacter {
     styleModifiers: character.appearance.styleModifiers,
     personality: character.personality,
     dialogueExamples: character.dialogueExamples,
+    backstory: character.backstory ?? "",
+    creator: character.creator ?? "",
     referenceImages: character.consistency.referenceImages,
     loraName: character.consistency.lora?.name ?? "",
     loraWeight: character.consistency.lora?.weight ?? 0.7,
@@ -99,6 +103,8 @@ export function CharacterEditorPage() {
       },
       personality: draft.personality,
       dialogueExamples: draft.dialogueExamples,
+      backstory: draft.backstory || undefined,
+      creator: draft.creator || undefined,
       expressions: Object.fromEntries(
         draft.expressions
           .filter((row) => row.key.trim())
@@ -368,6 +374,23 @@ export function CharacterEditorPage() {
                 />
               </Field>
             </div>
+            <div className="md:col-span-2">
+              <Field label="背景故事" hint="角色的背景设定（导演 LLM 用）">
+                <textarea
+                  className="min-h-20 w-full rounded-2xl border border-stroke bg-bg-primary px-4 py-3 text-sm text-text-primary outline-none transition focus:border-accent-blue"
+                  value={draft.backstory}
+                  onChange={(event) => setDraft({ ...draft, backstory: event.target.value })}
+                />
+              </Field>
+            </div>
+            <Field label="创作者">
+              <input
+                className="w-full rounded-2xl border border-stroke bg-bg-primary px-4 py-3 text-sm text-text-primary outline-none transition focus:border-accent-blue"
+                placeholder="ST 导入时自动填入"
+                value={draft.creator}
+                onChange={(event) => setDraft({ ...draft, creator: event.target.value })}
+              />
+            </Field>
             <div className="md:col-span-2">
               <Field label="表情库">
                 <KeyValueEditor

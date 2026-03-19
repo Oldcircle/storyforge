@@ -11,6 +11,7 @@ type PresetStore = {
   loadAll: () => Promise<void>;
   select: (id: string) => Promise<void>;
   create: () => Promise<string>;
+  createFromData: (preset: DirectorPreset) => Promise<void>;
   update: (id: string, data: Partial<DirectorPreset>) => Promise<void>;
   remove: (id: string) => Promise<void>;
 };
@@ -48,6 +49,10 @@ export const usePresetStore = create<PresetStore>((set, get) => ({
     const presets = await fetchPresets();
     set({ presets, selected: preset });
     return preset.id;
+  },
+  createFromData: async (preset) => {
+    await db.presets.add(preset);
+    set({ presets: await fetchPresets() });
   },
   update: async (id, data) => {
     await db.presets.update(id, { ...data, updatedAt: Date.now() });

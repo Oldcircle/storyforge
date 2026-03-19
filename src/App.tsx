@@ -16,6 +16,7 @@ import { useProjectStore } from "./stores/project";
 import { useRenderPresetStore } from "./stores/render-preset";
 import { useSceneStore } from "./stores/scene";
 import { useWorkflowTemplateStore } from "./stores/workflow-template";
+import { importProjectBundle } from "./utils/import-export";
 
 type Route =
   | { page: "dashboard" }
@@ -157,6 +158,24 @@ export default function App() {
             navigate(`project/${projectId}`);
           }}
           onOpenProject={(projectId) => navigate(`project/${projectId}`)}
+          onImportProject={async (json) => {
+            const bundle = importProjectBundle(json);
+            // Save all assets
+            for (const char of bundle.characters) {
+              await useCharacterStore.getState().createFromData(char);
+            }
+            if (bundle.sceneBook) {
+              await useSceneStore.getState().createFromData(bundle.sceneBook);
+            }
+            if (bundle.directorPreset) {
+              await usePresetStore.getState().createFromData(bundle.directorPreset);
+            }
+            if (bundle.renderPreset) {
+              await useRenderPresetStore.getState().createFromData(bundle.renderPreset);
+            }
+            await useProjectStore.getState().createFromData(bundle.project);
+            navigate(`project/${bundle.project.id}`);
+          }}
         />
       );
     }

@@ -7,6 +7,8 @@ import { useRenderPresetStore } from "../stores/render-preset";
 import { useSceneStore } from "../stores/scene";
 import { useWorkflowTemplateStore } from "../stores/workflow-template";
 import type { Project } from "../types/project";
+import { downloadTextFile, exportProjectBundle } from "../utils/import-export";
+import type { ProjectBundle } from "../utils/import-export";
 
 interface WorkspaceHomePageProps {
   project?: Project;
@@ -40,7 +42,32 @@ export function WorkspaceHomePage({ project }: WorkspaceHomePageProps) {
     <div className="space-y-6">
       <Panel
         title={project.name}
-        subtitle="这里先承接项目级概览，后面再挂接分镜编辑器和生成任务面板。"
+        subtitle="项目工作区概览与资产绑定。"
+        actions={
+          <button
+            className="rounded-full border border-stroke px-4 py-2 text-sm text-text-secondary transition hover:text-text-primary"
+            onClick={() => {
+              const linkedChars = characters.filter((c) => project.characterIds.includes(c.id));
+              const linkedScene = sceneBooks.find((s) => s.id === project.sceneBookId);
+              const linkedPreset = presets.find((p) => p.id === project.presetId);
+              const linkedRP = renderPresets.find((r) => r.id === project.renderPresetId);
+              const bundle: ProjectBundle = {
+                version: 1,
+                project,
+                characters: linkedChars,
+                sceneBook: linkedScene,
+                directorPreset: linkedPreset,
+                renderPreset: linkedRP,
+              };
+              downloadTextFile(
+                `${project.name || "project"}.storyforge.json`,
+                exportProjectBundle(bundle),
+              );
+            }}
+          >
+            导出项目
+          </button>
+        }
       >
         <div className="grid gap-4 md:grid-cols-3">
           <div className="rounded-2xl border border-stroke bg-bg-primary/70 p-4">

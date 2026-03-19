@@ -11,6 +11,7 @@ type SceneStore = {
   loadAll: () => Promise<void>;
   select: (id: string) => Promise<void>;
   create: (initial?: Partial<SceneBook>) => Promise<string>;
+  createFromData: (book: SceneBook) => Promise<void>;
   update: (id: string, data: Partial<SceneBook>) => Promise<void>;
   remove: (id: string) => Promise<void>;
   addEntry: (bookId: string, entry?: SceneEntry) => Promise<void>;
@@ -51,6 +52,10 @@ export const useSceneStore = create<SceneStore>((set, get) => ({
     const sceneBooks = await fetchSceneBooks();
     set({ sceneBooks, selected: sceneBook });
     return sceneBook.id;
+  },
+  createFromData: async (book) => {
+    await db.sceneBooks.add(book);
+    set({ sceneBooks: await fetchSceneBooks() });
   },
   update: async (id, data) => {
     await db.sceneBooks.update(id, { ...data, updatedAt: Date.now() });

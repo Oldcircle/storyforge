@@ -12,6 +12,7 @@ type ProjectStore = {
   loadAll: () => Promise<void>;
   select: (id: string) => Promise<void>;
   create: (name: string, description?: string) => Promise<string>;
+  createFromData: (project: Project) => Promise<void>;
   update: (id: string, data: Partial<Project>) => Promise<void>;
   remove: (id: string) => Promise<void>;
   addCharacter: (projectId: string, characterId: string) => Promise<void>;
@@ -56,6 +57,11 @@ export const useProjectStore = create<ProjectStore>((set, get) => ({
     const projects = await fetchProjects();
     set({ projects, current: project });
     return project.id;
+  },
+  createFromData: async (project) => {
+    await db.projects.add(project);
+    const projects = await fetchProjects();
+    set({ projects, current: project });
   },
   update: async (id, data) => {
     await db.projects.update(id, { ...data, updatedAt: Date.now() });

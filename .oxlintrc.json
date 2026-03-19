@@ -1,0 +1,7 @@
+{
+  "rules": {
+    "eqeqeq": "error",
+    "no-unused-vars": "warn"
+  },
+  "ignorePatterns": ["dist/", "node_modules/", "test-data/", "SillyTavern-Backup/"]
+}
