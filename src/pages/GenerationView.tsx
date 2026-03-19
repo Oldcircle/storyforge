@@ -17,7 +17,7 @@ interface GenerationViewPageProps {
 
 function StatCard({ label, value }: { label: string; value: string | number }) {
   return (
-    <div className="rounded-xl border border-stroke/50 bg-bg-primary/50 p-4 shadow-inner">
+    <div className="rounded-xl border border-stroke bg-bg-primary p-4 ">
       <div className="text-xs uppercase tracking-[0.2em] text-text-muted">{label}</div>
       <div className="mt-2 text-lg font-semibold text-text-primary">{value}</div>
     </div>
@@ -126,7 +126,7 @@ export function GenerationViewPage({ project }: GenerationViewPageProps) {
   if (!project) {
     return (
       <Panel title="未选择项目" subtitle="先从 Dashboard 进入一个项目工作区。">
-        <div className="rounded-2xl border border-dashed border-stroke/60 bg-bg-primary/30 p-8 text-sm text-text-muted">
+        <div className="rounded-2xl border border-dashed border-stroke bg-bg-primary p-8 text-sm text-text-muted">
           还没有活动项目，暂时无法发起生图任务。
         </div>
       </Panel>
@@ -140,7 +140,7 @@ export function GenerationViewPage({ project }: GenerationViewPageProps) {
         subtitle="对当前项目的结构化分镜逐镜生成图片，并把结果直接写回 storyboard。"
         actions={
           <button
-            className="rounded-xl bg-accent-blue px-4 py-2.5 text-sm font-medium text-white shadow-lg shadow-accent-blue/20 transition hover:bg-accent-blue/90 disabled:opacity-50 disabled:shadow-none"
+            className="rounded-xl bg-accent-blue px-4 py-2.5 text-sm font-medium text-white  transition hover:bg-accent-blue/90 disabled:opacity-50 disabled:shadow-none"
             disabled={
               generatingAll ||
               loading ||
@@ -208,7 +208,7 @@ export function GenerationViewPage({ project }: GenerationViewPageProps) {
           ) : null}
 
           {storyboards.length === 0 ? (
-            <div className="rounded-2xl border border-dashed border-stroke/60 bg-bg-primary/30 p-6 text-sm text-text-muted">
+            <div className="rounded-2xl border border-dashed border-stroke bg-bg-primary p-6 text-sm text-text-muted">
               当前项目还没有分镜记录，先去“分镜”页生成一条 storyboard。
             </div>
           ) : null}
@@ -224,7 +224,7 @@ export function GenerationViewPage({ project }: GenerationViewPageProps) {
         <Panel title="可用分镜" subtitle="选择一个 storyboard 作为当前生图批次。">
           <div className="space-y-2">
             {storyboards.length === 0 ? (
-              <div className="rounded-2xl border border-dashed border-stroke/60 bg-bg-primary/30 p-6 text-sm text-text-muted">
+              <div className="rounded-2xl border border-dashed border-stroke bg-bg-primary p-6 text-sm text-text-muted">
                 暂时没有可生成的分镜。
               </div>
             ) : null}
@@ -235,7 +235,7 @@ export function GenerationViewPage({ project }: GenerationViewPageProps) {
                 className={`w-full rounded-2xl border px-4 py-3 text-left transition ${
                   selected?.id === storyboard.id
                     ? "border-accent-blue/50 bg-accent-blue/10"
-                    : "border-stroke bg-bg-primary/60 hover:border-stroke-strong"
+                    : "border-stroke bg-bg-primary hover:border-stroke-strong"
                 }`}
                 onClick={() => void selectStoryboard(storyboard.id)}
               >
@@ -257,7 +257,7 @@ export function GenerationViewPage({ project }: GenerationViewPageProps) {
           }
         >
           {!selected ? (
-            <div className="rounded-2xl border border-dashed border-stroke/60 bg-bg-primary/30 p-8 text-sm text-text-muted">
+            <div className="rounded-2xl border border-dashed border-stroke bg-bg-primary p-8 text-sm text-text-muted">
               还没有选中的分镜记录。
             </div>
           ) : (
@@ -270,7 +270,7 @@ export function GenerationViewPage({ project }: GenerationViewPageProps) {
                       : <span>共 {selectedShots.length} 个镜头，已完成 {completedCount} 个</span>}
                   </div>
                   <button
-                    className="rounded-xl bg-accent-blue px-4 py-2.5 text-sm font-medium text-white shadow-lg shadow-accent-blue/20 transition hover:bg-accent-blue/90 disabled:opacity-50 disabled:shadow-none"
+                    className="rounded-xl bg-accent-blue px-4 py-2.5 text-sm font-medium text-white  transition hover:bg-accent-blue/90 disabled:opacity-50 disabled:shadow-none"
                     disabled={
                       generatingAll ||
                       loading ||
@@ -291,9 +291,9 @@ export function GenerationViewPage({ project }: GenerationViewPageProps) {
                 const execution = shot.execution;
 
                 return (
-                  <div key={shot.id} className="rounded-xl border border-stroke/50 bg-bg-primary/50 p-4 shadow-inner">
+                  <div key={shot.id} className="rounded-xl border border-stroke bg-bg-primary p-4 ">
                     <div className="grid gap-4 lg:grid-cols-[280px_minmax(0,1fr)]">
-                      <div className="overflow-hidden rounded-xl border border-stroke bg-bg-secondary/70">
+                      <div className="overflow-hidden rounded-xl border border-stroke bg-bg-secondary">
                         {previewUrl ? (
                           <img
                             src={previewUrl}
@@ -322,7 +322,7 @@ export function GenerationViewPage({ project }: GenerationViewPageProps) {
                             <div className="rounded-full border border-stroke px-3 py-1 font-mono text-xs text-text-muted">
                               {shot.cameraMovement}
                             </div>
-                            <div className="rounded-lg border border-stroke bg-bg-secondary/50 px-2 py-0.5 text-xs text-text-secondary">
+                            <div className="rounded-lg border border-stroke bg-bg-secondary px-2 py-0.5 text-xs text-text-secondary">
                               {effectiveStatus}
                             </div>
                           </div>
@@ -344,7 +344,7 @@ export function GenerationViewPage({ project }: GenerationViewPageProps) {
                         ) : null}
 
                         {shot.assembledPrompt ? (
-                          <div className="rounded-2xl border border-stroke bg-bg-secondary/50 p-3">
+                          <div className="rounded-2xl border border-stroke bg-bg-secondary p-3">
                             <div className="text-xs uppercase tracking-[0.2em] text-text-muted">
                               Prompt Package
                             </div>
@@ -362,7 +362,7 @@ export function GenerationViewPage({ project }: GenerationViewPageProps) {
                         ) : null}
 
                         {execution ? (
-                          <div className="rounded-2xl border border-stroke bg-bg-secondary/50 p-3 text-sm text-text-secondary">
+                          <div className="rounded-2xl border border-stroke bg-bg-secondary p-3 text-sm text-text-secondary">
                             <div className="text-xs uppercase tracking-[0.2em] text-text-muted">
                               最近一次执行快照
                             </div>
@@ -420,7 +420,7 @@ export function GenerationViewPage({ project }: GenerationViewPageProps) {
 
                         <div className="flex flex-wrap gap-3">
                           <button
-                            className="rounded-xl bg-accent-blue px-4 py-2.5 text-sm font-medium text-white shadow-lg shadow-accent-blue/20 transition hover:bg-accent-blue/90 disabled:opacity-50 disabled:shadow-none"
+                            className="rounded-xl bg-accent-blue px-4 py-2.5 text-sm font-medium text-white  transition hover:bg-accent-blue/90 disabled:opacity-50 disabled:shadow-none"
                             disabled={!preset || !settings.comfyuiUrl.trim() || effectiveStatus === "generating"}
                             onClick={() => {
                               if (!preset) {

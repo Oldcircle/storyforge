@@ -13,26 +13,25 @@ interface SidebarProps {
 
 export function Sidebar({ items, activeKey, onNavigate }: SidebarProps) {
   return (
-    <aside className="w-full border-b border-stroke/40 bg-transparent p-4 md:w-64 md:border-b-0 md:border-r md:pt-6">
-      <div className="mb-4 px-2 text-xs font-semibold uppercase tracking-[0.22em] text-text-muted/70">
-        Workflow
+    <aside className="w-full shrink-0 border-b border-stroke p-4 md:w-56 md:border-b-0 md:border-r md:py-6 md:pr-5">
+      <div className="mb-3 px-3 text-[10px] font-semibold uppercase tracking-widest text-text-muted">
+        Workspace
       </div>
-      <nav className="space-y-1.5">
+      <nav className="space-y-0.5">
         {items.map((item) => {
           const isActive = item.key === activeKey;
           return (
             <button
               key={item.key}
-              className={`flex w-full items-center justify-between rounded-xl px-4 py-3 text-left transition duration-300 ${
+              className={`flex w-full items-center rounded-lg px-3 py-2 text-left text-sm transition ${
                 isActive
-                  ? "bg-accent-blue/10 text-accent-blue shadow-[inset_0_0_16px_rgba(99,102,241,0.08)] ring-1 ring-accent-blue/20"
-                  : "text-text-secondary hover:bg-bg-tertiary/50 hover:text-text-primary"
-              } ${item.disabled ? "cursor-not-allowed opacity-45" : ""}`}
+                  ? "bg-accent-blue/12 font-medium text-accent-blue"
+                  : "text-text-secondary hover:bg-bg-tertiary/60 hover:text-text-primary"
+              } ${item.disabled ? "cursor-not-allowed opacity-40" : ""}`}
               disabled={item.disabled}
               onClick={() => onNavigate(item.hash)}
             >
-              <span className="text-sm font-medium">{item.label}</span>
-              <span className="font-mono text-xs text-text-muted">{item.key}</span>
+              {item.label}
             </button>
           );
         })}

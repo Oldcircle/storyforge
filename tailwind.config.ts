@@ -6,25 +6,26 @@ export default {
     extend: {
       colors: {
         bg: {
-          primary: "#09090e",      // Rich dark navy-slate
-          secondary: "#12131c",    // Cards/Panels
-          tertiary: "#191b28",     // Inputs/inner containers
-          elevated: "#222638",     // Popups/Hover states
+          primary: "#0c0e16",
+          secondary: "#141620",
+          tertiary: "#1c1e2e",
+          elevated: "#242640",
         },
         text: {
-          primary: "#e2e8f0",      // slightly softer white
-          secondary: "#94a3b8",    // slate-400
-          muted: "#64748b",        // slate-500
+          primary: "#e8eaf0",
+          secondary: "#9ba3b8",
+          muted: "#5e6580",
         },
         accent: {
-          blue: "#6366f1",         // Indigo/Blue
-          mint: "#10b981",         // Emerald
-          amber: "#f59e0b",        // Amber
-          rose: "#f43f5e",         // Rose
+          blue: "#4f8cff",
+          indigo: "#6c5ce7",
+          mint: "#00d2a0",
+          amber: "#ffb347",
+          rose: "#ff6b81",
         },
         stroke: {
-          DEFAULT: "#1e2233",      // Softer borders
-          strong: "#2d354a",       // Hover borders
+          DEFAULT: "#232840",
+          strong: "#333960",
         },
       },
       fontFamily: {
@@ -34,13 +35,15 @@ export default {
       borderRadius: {
         sm: "6px",
         DEFAULT: "8px",
-        lg: "8px",       // 按钮、badge
-        xl: "12px",      // 输入框、卡片
-        "2xl": "16px",   // Panel、模态框
+        lg: "8px",
+        xl: "12px",
+        "2xl": "16px",
       },
       boxShadow: {
-        panel: "0 16px 40px -8px rgba(0, 0, 0, 0.5)",
-        glow: "0 0 24px rgba(94, 138, 255, 0.08)",  // 微弱的蓝光
+        panel: "0 8px 32px -4px rgba(0, 0, 0, 0.4)",
+        glow: "0 0 20px rgba(79, 140, 255, 0.12)",
+        "glow-mint": "0 0 20px rgba(0, 210, 160, 0.10)",
+        inner: "inset 0 1px 2px rgba(0, 0, 0, 0.2)",
       },
     },
   },

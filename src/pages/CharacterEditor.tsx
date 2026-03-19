@@ -155,19 +155,19 @@ export function CharacterEditorPage() {
         actions={
           <div className="flex flex-wrap gap-2">
             <button
-              className="rounded-xl border border-stroke/60 bg-bg-tertiary/30 px-4 py-2.5 text-sm text-text-secondary transition hover:border-stroke hover:bg-bg-tertiary hover:text-text-primary hover:shadow-sm"
+              className="rounded-xl border border-stroke bg-bg-tertiary px-4 py-2.5 text-sm text-text-secondary transition hover:border-stroke hover:bg-bg-tertiary hover:text-text-primary "
               onClick={() => importJsonRef.current?.click()}
             >
               导入 JSON
             </button>
             <button
-              className="rounded-xl border border-stroke/60 bg-bg-tertiary/30 px-4 py-2.5 text-sm text-text-secondary transition hover:border-stroke hover:bg-bg-tertiary hover:text-text-primary hover:shadow-sm"
+              className="rounded-xl border border-stroke bg-bg-tertiary px-4 py-2.5 text-sm text-text-secondary transition hover:border-stroke hover:bg-bg-tertiary hover:text-text-primary "
               onClick={() => importStRef.current?.click()}
             >
               导入 ST PNG
             </button>
             <button
-              className="rounded-xl bg-accent-blue px-4 py-2.5 text-sm font-medium text-white shadow-lg shadow-accent-blue/20 transition hover:bg-accent-blue/90 disabled:opacity-50 disabled:shadow-none"
+              className="rounded-xl bg-accent-blue px-4 py-2.5 text-sm font-medium text-white  transition hover:bg-accent-blue/90 disabled:opacity-50 disabled:shadow-none"
               onClick={() => void handleCreate()}
             >
               新建角色
@@ -203,7 +203,7 @@ export function CharacterEditorPage() {
       >
         <div className="space-y-2">
           {characters.length === 0 ? (
-            <div className="rounded-2xl border border-dashed border-stroke/60 bg-bg-primary/30 p-6 text-sm text-text-muted">
+            <div className="rounded-2xl border border-dashed border-stroke bg-bg-primary p-6 text-sm text-text-muted">
             还没有角色卡，先创建一个角色作为导演引擎的第一批测试资产。
           </div>
         ) : null}
@@ -218,7 +218,7 @@ export function CharacterEditorPage() {
               className={`w-full rounded-2xl border px-4 py-3 text-left transition ${
                 selected?.id === character.id
                   ? "border-accent-blue/50 bg-accent-blue/10"
-                  : "border-stroke bg-bg-primary/60 hover:border-stroke-strong"
+                  : "border-stroke bg-bg-primary hover:border-stroke-strong"
               }`}
               onClick={() => void selectCharacter(character.id)}
             >
@@ -238,7 +238,7 @@ export function CharacterEditorPage() {
           selected ? (
             <div className="flex gap-2">
               <button
-                className="rounded-xl border border-stroke/60 bg-bg-tertiary/30 px-4 py-2.5 text-sm text-text-secondary transition hover:border-stroke hover:bg-bg-tertiary hover:text-text-primary hover:shadow-sm"
+                className="rounded-xl border border-stroke bg-bg-tertiary px-4 py-2.5 text-sm text-text-secondary transition hover:border-stroke hover:bg-bg-tertiary hover:text-text-primary "
                 onClick={() =>
                   downloadTextFile(
                     `${selected.name || "character"}.storyforge.character.json`,
@@ -249,7 +249,7 @@ export function CharacterEditorPage() {
                 导出 JSON
               </button>
               <button
-                className="rounded-xl border border-stroke/60 bg-bg-tertiary/30 px-4 py-2.5 text-sm text-text-secondary transition hover:border-stroke hover:bg-bg-tertiary hover:text-text-primary hover:shadow-sm"
+                className="rounded-xl border border-stroke bg-bg-tertiary px-4 py-2.5 text-sm text-text-secondary transition hover:border-stroke hover:bg-bg-tertiary hover:text-text-primary "
                 onClick={() => void removeCharacter(selected.id)}
               >
                 删除
@@ -265,7 +265,7 @@ export function CharacterEditorPage() {
         }
       >
         {!draft ? (
-          <div className="rounded-2xl border border-dashed border-stroke/60 bg-bg-primary/30 p-8 text-sm text-text-muted">
+          <div className="rounded-2xl border border-dashed border-stroke bg-bg-primary p-8 text-sm text-text-muted">
             选择左侧角色后开始编辑。
           </div>
         ) : (
@@ -281,14 +281,14 @@ export function CharacterEditorPage() {
             </div>
             <Field label="名称">
               <input
-                className="w-full rounded-xl border border-stroke/60 bg-bg-tertiary/50 px-4 py-2.5 hover:border-stroke-strong text-sm text-text-primary placeholder:text-text-muted outline-none transition focus:border-accent-blue focus:ring-2 focus:ring-accent-blue/10"
+                className="w-full rounded-xl border border-stroke bg-bg-tertiary px-4 py-2.5 hover:border-stroke-strong text-sm text-text-primary placeholder:text-text-muted outline-none transition focus:border-accent-blue focus:ring-2 focus:ring-accent-blue/10"
                 value={draft.name}
                 onChange={(event) => setDraft({ ...draft, name: event.target.value })}
               />
             </Field>
             <Field label="风格修饰">
               <input
-                className="w-full rounded-xl border border-stroke/60 bg-bg-tertiary/50 px-4 py-2.5 hover:border-stroke-strong text-sm text-text-primary placeholder:text-text-muted outline-none transition focus:border-accent-blue focus:ring-2 focus:ring-accent-blue/10"
+                className="w-full rounded-xl border border-stroke bg-bg-tertiary px-4 py-2.5 hover:border-stroke-strong text-sm text-text-primary placeholder:text-text-muted outline-none transition focus:border-accent-blue focus:ring-2 focus:ring-accent-blue/10"
                 value={draft.styleModifiers}
                 onChange={(event) => setDraft({ ...draft, styleModifiers: event.target.value })}
               />
@@ -296,7 +296,7 @@ export function CharacterEditorPage() {
             <div className="md:col-span-2">
               <Field label="基础 Prompt">
                 <textarea
-                  className="min-h-28 w-full rounded-xl border border-stroke/60 bg-bg-tertiary/50 px-4 py-2.5 hover:border-stroke-strong text-sm text-text-primary placeholder:text-text-muted outline-none transition focus:border-accent-blue focus:ring-2 focus:ring-accent-blue/10"
+                  className="min-h-28 w-full rounded-xl border border-stroke bg-bg-tertiary px-4 py-2.5 hover:border-stroke-strong text-sm text-text-primary placeholder:text-text-muted outline-none transition focus:border-accent-blue focus:ring-2 focus:ring-accent-blue/10"
                   value={draft.basePrompt}
                   onChange={(event) => setDraft({ ...draft, basePrompt: event.target.value })}
                 />
@@ -312,14 +312,14 @@ export function CharacterEditorPage() {
             </div>
             <Field label="LoRA 名称">
               <input
-                className="w-full rounded-xl border border-stroke/60 bg-bg-tertiary/50 px-4 py-2.5 hover:border-stroke-strong text-sm text-text-primary placeholder:text-text-muted outline-none transition focus:border-accent-blue focus:ring-2 focus:ring-accent-blue/10"
+                className="w-full rounded-xl border border-stroke bg-bg-tertiary px-4 py-2.5 hover:border-stroke-strong text-sm text-text-primary placeholder:text-text-muted outline-none transition focus:border-accent-blue focus:ring-2 focus:ring-accent-blue/10"
                 value={draft.loraName}
                 onChange={(event) => setDraft({ ...draft, loraName: event.target.value })}
               />
             </Field>
             <Field label="LoRA 权重">
               <input
-                className="w-full rounded-xl border border-stroke/60 bg-bg-tertiary/50 px-4 py-2.5 hover:border-stroke-strong text-sm text-text-primary placeholder:text-text-muted outline-none transition focus:border-accent-blue focus:ring-2 focus:ring-accent-blue/10"
+                className="w-full rounded-xl border border-stroke bg-bg-tertiary px-4 py-2.5 hover:border-stroke-strong text-sm text-text-primary placeholder:text-text-muted outline-none transition focus:border-accent-blue focus:ring-2 focus:ring-accent-blue/10"
                 type="number"
                 max="1"
                 min="0"
@@ -332,7 +332,7 @@ export function CharacterEditorPage() {
             </Field>
             <Field label="触发词">
               <input
-                className="w-full rounded-xl border border-stroke/60 bg-bg-tertiary/50 px-4 py-2.5 hover:border-stroke-strong text-sm text-text-primary placeholder:text-text-muted outline-none transition focus:border-accent-blue focus:ring-2 focus:ring-accent-blue/10"
+                className="w-full rounded-xl border border-stroke bg-bg-tertiary px-4 py-2.5 hover:border-stroke-strong text-sm text-text-primary placeholder:text-text-muted outline-none transition focus:border-accent-blue focus:ring-2 focus:ring-accent-blue/10"
                 value={draft.loraTriggerWord}
                 onChange={(event) =>
                   setDraft({ ...draft, loraTriggerWord: event.target.value })
@@ -341,7 +341,7 @@ export function CharacterEditorPage() {
             </Field>
             <Field label="基础 Seed">
               <input
-                className="w-full rounded-xl border border-stroke/60 bg-bg-tertiary/50 px-4 py-2.5 hover:border-stroke-strong text-sm text-text-primary placeholder:text-text-muted outline-none transition focus:border-accent-blue focus:ring-2 focus:ring-accent-blue/10"
+                className="w-full rounded-xl border border-stroke bg-bg-tertiary px-4 py-2.5 hover:border-stroke-strong text-sm text-text-primary placeholder:text-text-muted outline-none transition focus:border-accent-blue focus:ring-2 focus:ring-accent-blue/10"
                 type="number"
                 value={draft.seedBase}
                 onChange={(event) => setDraft({ ...draft, seedBase: event.target.value })}
@@ -350,7 +350,7 @@ export function CharacterEditorPage() {
             <div className="md:col-span-2">
               <Field label="负面 Prompt">
                 <textarea
-                  className="min-h-24 w-full rounded-xl border border-stroke/60 bg-bg-tertiary/50 px-4 py-2.5 hover:border-stroke-strong text-sm text-text-primary placeholder:text-text-muted outline-none transition focus:border-accent-blue focus:ring-2 focus:ring-accent-blue/10"
+                  className="min-h-24 w-full rounded-xl border border-stroke bg-bg-tertiary px-4 py-2.5 hover:border-stroke-strong text-sm text-text-primary placeholder:text-text-muted outline-none transition focus:border-accent-blue focus:ring-2 focus:ring-accent-blue/10"
                   value={draft.negativePrompt}
                   onChange={(event) => setDraft({ ...draft, negativePrompt: event.target.value })}
                 />
@@ -359,7 +359,7 @@ export function CharacterEditorPage() {
             <div className="md:col-span-2">
               <Field label="性格描述">
                 <textarea
-                  className="min-h-24 w-full rounded-xl border border-stroke/60 bg-bg-tertiary/50 px-4 py-2.5 hover:border-stroke-strong text-sm text-text-primary placeholder:text-text-muted outline-none transition focus:border-accent-blue focus:ring-2 focus:ring-accent-blue/10"
+                  className="min-h-24 w-full rounded-xl border border-stroke bg-bg-tertiary px-4 py-2.5 hover:border-stroke-strong text-sm text-text-primary placeholder:text-text-muted outline-none transition focus:border-accent-blue focus:ring-2 focus:ring-accent-blue/10"
                   value={draft.personality}
                   onChange={(event) => setDraft({ ...draft, personality: event.target.value })}
                 />
@@ -368,7 +368,7 @@ export function CharacterEditorPage() {
             <div className="md:col-span-2">
               <Field label="对话示例">
                 <textarea
-                  className="min-h-24 w-full rounded-xl border border-stroke/60 bg-bg-tertiary/50 px-4 py-2.5 hover:border-stroke-strong text-sm text-text-primary placeholder:text-text-muted outline-none transition focus:border-accent-blue focus:ring-2 focus:ring-accent-blue/10"
+                  className="min-h-24 w-full rounded-xl border border-stroke bg-bg-tertiary px-4 py-2.5 hover:border-stroke-strong text-sm text-text-primary placeholder:text-text-muted outline-none transition focus:border-accent-blue focus:ring-2 focus:ring-accent-blue/10"
                   value={draft.dialogueExamples}
                   onChange={(event) => setDraft({ ...draft, dialogueExamples: event.target.value })}
                 />
@@ -377,7 +377,7 @@ export function CharacterEditorPage() {
             <div className="md:col-span-2">
               <Field label="背景故事" hint="角色的背景设定（导演 LLM 用）">
                 <textarea
-                  className="min-h-20 w-full rounded-xl border border-stroke/60 bg-bg-tertiary/50 px-4 py-2.5 hover:border-stroke-strong text-sm text-text-primary placeholder:text-text-muted outline-none transition focus:border-accent-blue focus:ring-2 focus:ring-accent-blue/10"
+                  className="min-h-20 w-full rounded-xl border border-stroke bg-bg-tertiary px-4 py-2.5 hover:border-stroke-strong text-sm text-text-primary placeholder:text-text-muted outline-none transition focus:border-accent-blue focus:ring-2 focus:ring-accent-blue/10"
                   value={draft.backstory}
                   onChange={(event) => setDraft({ ...draft, backstory: event.target.value })}
                 />
@@ -385,7 +385,7 @@ export function CharacterEditorPage() {
             </div>
             <Field label="创作者">
               <input
-                className="w-full rounded-xl border border-stroke/60 bg-bg-tertiary/50 px-4 py-2.5 hover:border-stroke-strong text-sm text-text-primary placeholder:text-text-muted outline-none transition focus:border-accent-blue focus:ring-2 focus:ring-accent-blue/10"
+                className="w-full rounded-xl border border-stroke bg-bg-tertiary px-4 py-2.5 hover:border-stroke-strong text-sm text-text-primary placeholder:text-text-muted outline-none transition focus:border-accent-blue focus:ring-2 focus:ring-accent-blue/10"
                 placeholder="ST 导入时自动填入"
                 value={draft.creator}
                 onChange={(event) => setDraft({ ...draft, creator: event.target.value })}

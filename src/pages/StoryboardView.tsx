@@ -61,7 +61,7 @@ export function StoryboardViewPage({ project }: StoryboardViewPageProps) {
   if (!project) {
     return (
       <Panel title="未选择项目" subtitle="先从 Dashboard 进入一个项目工作区。">
-        <div className="rounded-2xl border border-dashed border-stroke/60 bg-bg-primary/30 p-8 text-sm text-text-muted">
+        <div className="rounded-2xl border border-dashed border-stroke bg-bg-primary p-8 text-sm text-text-muted">
           还没有活动项目，暂时无法生成分镜。
         </div>
       </Panel>
@@ -93,19 +93,19 @@ export function StoryboardViewPage({ project }: StoryboardViewPageProps) {
             </Field>
 
             <div className="grid gap-3 md:grid-cols-3">
-              <div className="rounded-xl border border-stroke/50 bg-bg-primary/50 p-4 shadow-inner">
+              <div className="rounded-xl border border-stroke bg-bg-primary p-4 ">
                 <div className="text-xs uppercase tracking-[0.2em] text-text-muted">角色</div>
                 <div className="mt-2 text-lg font-semibold text-text-primary">
                   {linkedCharacters.length}
                 </div>
               </div>
-              <div className="rounded-xl border border-stroke/50 bg-bg-primary/50 p-4 shadow-inner">
+              <div className="rounded-xl border border-stroke bg-bg-primary p-4 ">
                 <div className="text-xs uppercase tracking-[0.2em] text-text-muted">场景书</div>
                 <div className="mt-2 text-sm font-semibold text-text-primary">
                   {sceneBook?.name ?? "未绑定"}
                 </div>
               </div>
-              <div className="rounded-xl border border-stroke/50 bg-bg-primary/50 p-4 shadow-inner">
+              <div className="rounded-xl border border-stroke bg-bg-primary p-4 ">
                 <div className="text-xs uppercase tracking-[0.2em] text-text-muted">预设</div>
                 <div className="mt-2 text-sm font-semibold text-text-primary">
                   {preset?.name ?? "未绑定"}
@@ -138,7 +138,7 @@ export function StoryboardViewPage({ project }: StoryboardViewPageProps) {
             ) : null}
 
             <button
-              className="rounded-xl bg-accent-blue px-4 py-2.5 text-sm font-medium text-white shadow-lg shadow-accent-blue/20 transition hover:bg-accent-blue/90 disabled:opacity-50 disabled:shadow-none"
+              className="rounded-xl bg-accent-blue px-4 py-2.5 text-sm font-medium text-white  transition hover:bg-accent-blue/90 disabled:opacity-50 disabled:shadow-none"
               disabled={!canGenerate || loading}
               onClick={() => {
                 if (!preset) {
@@ -159,7 +159,7 @@ export function StoryboardViewPage({ project }: StoryboardViewPageProps) {
           </div>
 
           <div className="space-y-4">
-            <div className="rounded-xl border border-stroke bg-bg-primary/60 p-4">
+            <div className="rounded-xl border border-stroke bg-bg-primary p-4">
               <div className="text-sm font-semibold text-text-primary">最近一次 Prompt 预览</div>
               <div className="mt-3 space-y-3">
                 {lastPromptMessages.length === 0 ? (
@@ -186,7 +186,7 @@ export function StoryboardViewPage({ project }: StoryboardViewPageProps) {
         <Panel title="分镜记录" subtitle="当前项目下已保存的结构化分镜。">
           <div className="space-y-2">
             {storyboards.length === 0 ? (
-              <div className="rounded-2xl border border-dashed border-stroke/60 bg-bg-primary/30 p-6 text-sm text-text-muted">
+              <div className="rounded-2xl border border-dashed border-stroke bg-bg-primary p-6 text-sm text-text-muted">
                 还没有分镜记录，先生成第一条。
               </div>
             ) : null}
@@ -196,7 +196,7 @@ export function StoryboardViewPage({ project }: StoryboardViewPageProps) {
                 className={`w-full rounded-2xl border px-4 py-3 text-left transition ${
                   selected?.id === storyboard.id
                     ? "border-accent-blue/50 bg-accent-blue/10"
-                    : "border-stroke bg-bg-primary/60 hover:border-stroke-strong"
+                    : "border-stroke bg-bg-primary hover:border-stroke-strong"
                 }`}
                 onClick={() => void selectStoryboard(storyboard.id)}
               >
@@ -218,18 +218,18 @@ export function StoryboardViewPage({ project }: StoryboardViewPageProps) {
           }
         >
           {!selected ? (
-            <div className="rounded-2xl border border-dashed border-stroke/60 bg-bg-primary/30 p-8 text-sm text-text-muted">
+            <div className="rounded-2xl border border-dashed border-stroke bg-bg-primary p-8 text-sm text-text-muted">
               当前还没有选中的分镜。
             </div>
           ) : (
             <div className="space-y-4">
-              <div className="rounded-xl border border-stroke bg-bg-primary/60 p-4 text-sm text-text-secondary">
+              <div className="rounded-xl border border-stroke bg-bg-primary p-4 text-sm text-text-secondary">
                 <div className="font-semibold text-text-primary">原始输入</div>
                 <p className="mt-2">{selected.userPrompt}</p>
               </div>
 
               {selected.shots.map((shot) => (
-                <div key={shot.id} className="rounded-xl border border-stroke/50 bg-bg-primary/50 p-4 shadow-inner">
+                <div key={shot.id} className="rounded-xl border border-stroke bg-bg-primary p-4 ">
                   <div className="flex items-start justify-between gap-4">
                     <div>
                       <div className="text-xs uppercase tracking-[0.2em] text-text-muted">
@@ -260,14 +260,14 @@ export function StoryboardViewPage({ project }: StoryboardViewPageProps) {
                   ) : null}
 
                   {shot.dialogue ? (
-                    <div className="mt-4 rounded-2xl border border-stroke bg-bg-secondary/50 p-3 text-sm text-text-secondary">
+                    <div className="mt-4 rounded-2xl border border-stroke bg-bg-secondary p-3 text-sm text-text-secondary">
                       <span className="font-semibold text-text-primary">台词：</span>
                       {shot.dialogue}
                     </div>
                   ) : null}
 
                   {shot.narration ? (
-                    <div className="mt-3 rounded-2xl border border-stroke bg-bg-secondary/50 p-3 text-sm text-text-secondary">
+                    <div className="mt-3 rounded-2xl border border-stroke bg-bg-secondary p-3 text-sm text-text-secondary">
                       <span className="font-semibold text-text-primary">旁白：</span>
                       {shot.narration}
                     </div>
@@ -276,7 +276,7 @@ export function StoryboardViewPage({ project }: StoryboardViewPageProps) {
               ))}
 
               {lastRawResponse ? (
-                <div className="rounded-xl border border-stroke bg-bg-primary/60 p-4">
+                <div className="rounded-xl border border-stroke bg-bg-primary p-4">
                   <div className="text-sm font-semibold text-text-primary">最近一次原始模型输出</div>
                   <pre className="mt-3 overflow-x-auto whitespace-pre-wrap font-mono text-xs text-text-secondary">
                     {lastRawResponse}

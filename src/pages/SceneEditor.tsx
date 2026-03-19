@@ -179,19 +179,19 @@ export function SceneEditorPage() {
         actions={
           <div className="flex flex-wrap gap-2">
             <button
-              className="rounded-xl border border-stroke/60 bg-bg-tertiary/30 px-4 py-2.5 text-sm text-text-secondary transition hover:border-stroke hover:bg-bg-tertiary hover:text-text-primary hover:shadow-sm"
+              className="rounded-xl border border-stroke bg-bg-tertiary px-4 py-2.5 text-sm text-text-secondary transition hover:border-stroke hover:bg-bg-tertiary hover:text-text-primary "
               onClick={() => importJsonRef.current?.click()}
             >
               导入 JSON
             </button>
             <button
-              className="rounded-xl border border-stroke/60 bg-bg-tertiary/30 px-4 py-2.5 text-sm text-text-secondary transition hover:border-stroke hover:bg-bg-tertiary hover:text-text-primary hover:shadow-sm"
+              className="rounded-xl border border-stroke bg-bg-tertiary px-4 py-2.5 text-sm text-text-secondary transition hover:border-stroke hover:bg-bg-tertiary hover:text-text-primary "
               onClick={() => importStRef.current?.click()}
             >
               导入 ST 世界书
             </button>
             <button
-              className="rounded-xl bg-accent-blue px-4 py-2.5 text-sm font-medium text-white shadow-lg shadow-accent-blue/20 transition hover:bg-accent-blue/90 disabled:opacity-50 disabled:shadow-none"
+              className="rounded-xl bg-accent-blue px-4 py-2.5 text-sm font-medium text-white  transition hover:bg-accent-blue/90 disabled:opacity-50 disabled:shadow-none"
               onClick={() => void createBook().then(selectBook)}
             >
               新建场景书
@@ -227,7 +227,7 @@ export function SceneEditorPage() {
       >
         <div className="space-y-2">
           {sceneBooks.length === 0 ? (
-            <div className="rounded-2xl border border-dashed border-stroke/60 bg-bg-primary/30 p-6 text-sm text-text-muted">
+            <div className="rounded-2xl border border-dashed border-stroke bg-bg-primary p-6 text-sm text-text-muted">
               还没有场景书。先创建一个基础场景集，给后面的关键词匹配做输入。
             </div>
           ) : null}
@@ -242,7 +242,7 @@ export function SceneEditorPage() {
               className={`w-full rounded-2xl border px-4 py-3 text-left transition ${
                 selected?.id === book.id
                   ? "border-accent-blue/50 bg-accent-blue/10"
-                  : "border-stroke bg-bg-primary/60 hover:border-stroke-strong"
+                  : "border-stroke bg-bg-primary hover:border-stroke-strong"
               }`}
               onClick={() => void selectBook(book.id)}
             >
@@ -260,7 +260,7 @@ export function SceneEditorPage() {
           selected ? (
             <div className="flex gap-2">
               <button
-                className="rounded-xl border border-stroke/60 bg-bg-tertiary/30 px-4 py-2.5 text-sm text-text-secondary transition hover:border-stroke hover:bg-bg-tertiary hover:text-text-primary hover:shadow-sm"
+                className="rounded-xl border border-stroke bg-bg-tertiary px-4 py-2.5 text-sm text-text-secondary transition hover:border-stroke hover:bg-bg-tertiary hover:text-text-primary "
                 onClick={() =>
                   downloadTextFile(
                     `${selected.name || "scene-book"}.storyforge.scene.json`,
@@ -271,7 +271,7 @@ export function SceneEditorPage() {
                 导出 JSON
               </button>
               <button
-                className="rounded-xl border border-stroke/60 bg-bg-tertiary/30 px-4 py-2.5 text-sm text-text-secondary transition hover:border-stroke hover:bg-bg-tertiary hover:text-text-primary hover:shadow-sm"
+                className="rounded-xl border border-stroke bg-bg-tertiary px-4 py-2.5 text-sm text-text-secondary transition hover:border-stroke hover:bg-bg-tertiary hover:text-text-primary "
                 onClick={() => void removeBook(selected.id)}
               >
                 删除
@@ -287,7 +287,7 @@ export function SceneEditorPage() {
         }
       >
         {!draft ? (
-          <div className="rounded-2xl border border-dashed border-stroke/60 bg-bg-primary/30 p-8 text-sm text-text-muted">
+          <div className="rounded-2xl border border-dashed border-stroke bg-bg-primary p-8 text-sm text-text-muted">
             选择左侧场景书后开始编辑。
           </div>
         ) : (
@@ -295,14 +295,14 @@ export function SceneEditorPage() {
             <div className="grid gap-4 md:grid-cols-2">
               <Field label="名称">
                 <input
-                  className="w-full rounded-xl border border-stroke/60 bg-bg-tertiary/50 px-4 py-2.5 hover:border-stroke-strong text-sm text-text-primary placeholder:text-text-muted outline-none transition focus:border-accent-blue focus:ring-2 focus:ring-accent-blue/10"
+                  className="w-full rounded-xl border border-stroke bg-bg-tertiary px-4 py-2.5 hover:border-stroke-strong text-sm text-text-primary placeholder:text-text-muted outline-none transition focus:border-accent-blue focus:ring-2 focus:ring-accent-blue/10"
                   value={draft.name}
                   onChange={(event) => setDraft({ ...draft, name: event.target.value })}
                 />
               </Field>
               <Field label="描述">
                 <input
-                  className="w-full rounded-xl border border-stroke/60 bg-bg-tertiary/50 px-4 py-2.5 hover:border-stroke-strong text-sm text-text-primary placeholder:text-text-muted outline-none transition focus:border-accent-blue focus:ring-2 focus:ring-accent-blue/10"
+                  className="w-full rounded-xl border border-stroke bg-bg-tertiary px-4 py-2.5 hover:border-stroke-strong text-sm text-text-primary placeholder:text-text-muted outline-none transition focus:border-accent-blue focus:ring-2 focus:ring-accent-blue/10"
                   value={draft.description}
                   onChange={(event) => setDraft({ ...draft, description: event.target.value })}
                 />
@@ -316,7 +316,7 @@ export function SceneEditorPage() {
                   <p className="text-xs text-text-muted">后续导演引擎会按这些条目做匹配和注入。</p>
                 </div>
                 <button
-                  className="rounded-xl border border-stroke/60 bg-bg-tertiary/30 px-4 py-2.5 text-sm text-text-secondary transition hover:border-stroke hover:bg-bg-tertiary hover:text-text-primary hover:shadow-sm"
+                  className="rounded-xl border border-stroke bg-bg-tertiary px-4 py-2.5 text-sm text-text-secondary transition hover:border-stroke hover:bg-bg-tertiary hover:text-text-primary "
                   onClick={() => {
                     if (!selected) {
                       return;
@@ -329,7 +329,7 @@ export function SceneEditorPage() {
               </div>
 
               {sortedEntries.map((entry, sortedIndex) => (
-                <div key={entry.id} className="rounded-xl border border-stroke/50 bg-bg-primary/50 p-4 shadow-inner">
+                <div key={entry.id} className="rounded-xl border border-stroke bg-bg-primary p-4 ">
                   <div className="mb-3 flex items-start justify-between gap-4">
                     <div className="flex items-center gap-2">
                       <div className="flex flex-col gap-0.5">
@@ -359,7 +359,7 @@ export function SceneEditorPage() {
                     </div>
                     <div className="flex-1">
                       <input
-                        className="w-full rounded-xl border border-stroke/60 bg-bg-tertiary/50 px-4 py-2.5 hover:border-stroke-strong text-sm text-text-primary placeholder:text-text-muted outline-none transition focus:border-accent-blue focus:ring-2 focus:ring-accent-blue/10"
+                        className="w-full rounded-xl border border-stroke bg-bg-tertiary px-4 py-2.5 hover:border-stroke-strong text-sm text-text-primary placeholder:text-text-muted outline-none transition focus:border-accent-blue focus:ring-2 focus:ring-accent-blue/10"
                         value={entry.name}
                         onChange={(event) =>
                           setDraft(updateEntry(draft, entry.id, { name: event.target.value }))
@@ -379,7 +379,7 @@ export function SceneEditorPage() {
                   <div className="grid gap-3 md:grid-cols-2">
                     <Field label="关键词" hint="逗号分隔，任一匹配即触发">
                       <input
-                        className="w-full rounded-xl border border-stroke/60 bg-bg-tertiary/50 px-4 py-2.5 hover:border-stroke-strong text-sm text-text-primary placeholder:text-text-muted outline-none transition focus:border-accent-blue focus:ring-2 focus:ring-accent-blue/10"
+                        className="w-full rounded-xl border border-stroke bg-bg-tertiary px-4 py-2.5 hover:border-stroke-strong text-sm text-text-primary placeholder:text-text-muted outline-none transition focus:border-accent-blue focus:ring-2 focus:ring-accent-blue/10"
                         value={entry.keywords}
                         onChange={(event) =>
                           setDraft(updateEntry(draft, entry.id, { keywords: event.target.value }))
@@ -388,7 +388,7 @@ export function SceneEditorPage() {
                     </Field>
                     <Field label="次要关键词" hint="全部匹配才触发（AND）">
                       <input
-                        className="w-full rounded-xl border border-stroke/60 bg-bg-tertiary/50 px-4 py-2.5 hover:border-stroke-strong text-sm text-text-primary placeholder:text-text-muted outline-none transition focus:border-accent-blue focus:ring-2 focus:ring-accent-blue/10"
+                        className="w-full rounded-xl border border-stroke bg-bg-tertiary px-4 py-2.5 hover:border-stroke-strong text-sm text-text-primary placeholder:text-text-muted outline-none transition focus:border-accent-blue focus:ring-2 focus:ring-accent-blue/10"
                         value={entry.secondaryKeywords}
                         onChange={(event) =>
                           setDraft(updateEntry(draft, entry.id, { secondaryKeywords: event.target.value }))
@@ -397,7 +397,7 @@ export function SceneEditorPage() {
                     </Field>
                     <Field label="用途" hint="控制此条目注入到哪条管线">
                       <select
-                        className="w-full rounded-xl border border-stroke/60 bg-bg-tertiary/50 px-4 py-2.5 hover:border-stroke-strong text-sm text-text-primary placeholder:text-text-muted outline-none transition focus:border-accent-blue focus:ring-2 focus:ring-accent-blue/10"
+                        className="w-full rounded-xl border border-stroke bg-bg-tertiary px-4 py-2.5 hover:border-stroke-strong text-sm text-text-primary placeholder:text-text-muted outline-none transition focus:border-accent-blue focus:ring-2 focus:ring-accent-blue/10"
                         value={entry.usage}
                         onChange={(event) =>
                           setDraft(updateEntry(draft, entry.id, { usage: event.target.value as SceneEntryUsage }))
@@ -436,7 +436,7 @@ export function SceneEditorPage() {
                       <div className="md:col-span-2">
                         <Field label="导演上下文" hint="仅给导演 LLM 的叙事信息，不会进入 CLIP">
                           <textarea
-                            className="min-h-16 w-full rounded-xl border border-stroke/60 bg-bg-tertiary/50 px-4 py-2.5 hover:border-stroke-strong text-sm text-text-primary placeholder:text-text-muted outline-none transition focus:border-accent-blue focus:ring-2 focus:ring-accent-blue/10"
+                            className="min-h-16 w-full rounded-xl border border-stroke bg-bg-tertiary px-4 py-2.5 hover:border-stroke-strong text-sm text-text-primary placeholder:text-text-muted outline-none transition focus:border-accent-blue focus:ring-2 focus:ring-accent-blue/10"
                             placeholder="例：这是适合旧情重逢、暧昧和压抑情绪爆发的封闭空间。"
                             value={entry.directorContext}
                             onChange={(event) =>
@@ -451,7 +451,7 @@ export function SceneEditorPage() {
                         <div className="md:col-span-2">
                           <Field label="环境 Prompt" hint="CLIP 友好的视觉描述（英文关键词），直接注入生图 prompt">
                             <textarea
-                              className="min-h-24 w-full rounded-xl border border-stroke/60 bg-bg-tertiary/50 px-4 py-2.5 hover:border-stroke-strong text-sm text-text-primary placeholder:text-text-muted outline-none transition focus:border-accent-blue focus:ring-2 focus:ring-accent-blue/10"
+                              className="min-h-24 w-full rounded-xl border border-stroke bg-bg-tertiary px-4 py-2.5 hover:border-stroke-strong text-sm text-text-primary placeholder:text-text-muted outline-none transition focus:border-accent-blue focus:ring-2 focus:ring-accent-blue/10"
                               placeholder="例：cozy coffee shop interior, warm yellow lighting, rain on windows"
                               value={entry.environmentPrompt}
                               onChange={(event) =>
@@ -463,7 +463,7 @@ export function SceneEditorPage() {
                         <div className="md:col-span-2">
                           <Field label="负面 Prompt" hint="场景级负面词，会追加到渲染预设的负面词后">
                             <input
-                              className="w-full rounded-xl border border-stroke/60 bg-bg-tertiary/50 px-4 py-2.5 hover:border-stroke-strong text-sm text-text-primary placeholder:text-text-muted outline-none transition focus:border-accent-blue focus:ring-2 focus:ring-accent-blue/10"
+                              className="w-full rounded-xl border border-stroke bg-bg-tertiary px-4 py-2.5 hover:border-stroke-strong text-sm text-text-primary placeholder:text-text-muted outline-none transition focus:border-accent-blue focus:ring-2 focus:ring-accent-blue/10"
                               placeholder="例：bright daylight, outdoor"
                               value={entry.negativePrompt}
                               onChange={(event) =>
@@ -476,7 +476,7 @@ export function SceneEditorPage() {
                     )}
                     <Field label="光照">
                       <input
-                        className="w-full rounded-xl border border-stroke/60 bg-bg-tertiary/50 px-4 py-2.5 hover:border-stroke-strong text-sm text-text-primary placeholder:text-text-muted outline-none transition focus:border-accent-blue focus:ring-2 focus:ring-accent-blue/10"
+                        className="w-full rounded-xl border border-stroke bg-bg-tertiary px-4 py-2.5 hover:border-stroke-strong text-sm text-text-primary placeholder:text-text-muted outline-none transition focus:border-accent-blue focus:ring-2 focus:ring-accent-blue/10"
                         value={entry.lighting}
                         onChange={(event) =>
                           setDraft(updateEntry(draft, entry.id, { lighting: event.target.value }))
@@ -485,7 +485,7 @@ export function SceneEditorPage() {
                     </Field>
                     <Field label="氛围">
                       <input
-                        className="w-full rounded-xl border border-stroke/60 bg-bg-tertiary/50 px-4 py-2.5 hover:border-stroke-strong text-sm text-text-primary placeholder:text-text-muted outline-none transition focus:border-accent-blue focus:ring-2 focus:ring-accent-blue/10"
+                        className="w-full rounded-xl border border-stroke bg-bg-tertiary px-4 py-2.5 hover:border-stroke-strong text-sm text-text-primary placeholder:text-text-muted outline-none transition focus:border-accent-blue focus:ring-2 focus:ring-accent-blue/10"
                         value={entry.atmosphere}
                         onChange={(event) =>
                           setDraft(updateEntry(draft, entry.id, { atmosphere: event.target.value }))
@@ -494,7 +494,7 @@ export function SceneEditorPage() {
                     </Field>
                     <Field label="天气">
                       <input
-                        className="w-full rounded-xl border border-stroke/60 bg-bg-tertiary/50 px-4 py-2.5 hover:border-stroke-strong text-sm text-text-primary placeholder:text-text-muted outline-none transition focus:border-accent-blue focus:ring-2 focus:ring-accent-blue/10"
+                        className="w-full rounded-xl border border-stroke bg-bg-tertiary px-4 py-2.5 hover:border-stroke-strong text-sm text-text-primary placeholder:text-text-muted outline-none transition focus:border-accent-blue focus:ring-2 focus:ring-accent-blue/10"
                         placeholder="例：heavy rain, overcast"
                         value={entry.weather}
                         onChange={(event) =>
