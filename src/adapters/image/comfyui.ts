@@ -98,12 +98,9 @@ export class ComfyUIAdapter implements ImageAdapter {
     try {
       const res = await fetch(`${this.getEffectiveUrl()}/object_info/CheckpointLoaderSimple`);
       if (!res.ok) return [];
-      const data = (await res.json()) as {
-        CheckpointLoaderSimple?: {
-          input?: { required?: { ckpt_name?: [string[]] } };
-        };
-      };
-      return data.CheckpointLoaderSimple?.input?.required?.ckpt_name?.[0] ?? [];
+      const data = (await res.json()) as Record<string, unknown>;
+      const node = data.CheckpointLoaderSimple as { input?: { required?: { ckpt_name?: unknown } } } | undefined;
+      return ComfyUIAdapter.extractOptions(node?.input?.required?.ckpt_name);
     } catch {
       return [];
     }
@@ -180,6 +177,64 @@ export class ComfyUIAdapter implements ImageAdapter {
     return template.builtin || template.id === "builtin:comfyui-basic-txt2img";
   }
 
+  /**
+   * Extract string[] from a ComfyUI object_info field.
+   * ComfyUI has two formats depending on version:
+   *   - Old: [string[]]
+   *   - New (v0.17+): ["COMBO", { options: string[] }] or [string[], { tooltip }]
+   */
+  private static extractOptions(field: unknown): string[] {
+    if (!Array.isArray(field) || field.length === 0) return [];
+    const first = field[0];
+    // New format: ["COMBO", { options: [...] }]
+    if (first === "COMBO" && field[1] && typeof field[1] === "object") {
+      const opts = (field[1] as { options?: unknown }).options;
+      return Array.isArray(opts) ? (opts as string[]) : [];
+    }
+    // Old or alternate format: [string[], ...]
+    if (Array.isArray(first)) return first as string[];
+    return [];
+  }
+
+  /** 查询 ComfyUI 可用的上采样模型列表 */
+  async getUpscaleModels(): Promise<string[]> {
+    try {
+      const res = await fetch(`${this.getEffectiveUrl()}/object_info/UpscaleModelLoader`);
+      if (!res.ok) return [];
+      const data = (await res.json()) as Record<string, unknown>;
+      const node = data.UpscaleModelLoader as { input?: { required?: { model_name?: unknown } } } | undefined;
+      return ComfyUIAdapter.extractOptions(node?.input?.required?.model_name);
+    } catch {
+      return [];
+    }
+  }
+
+  /** 查询 ComfyUI 可用的 scheduler 列表 */
+  async getSchedulers(): Promise<string[]> {
+    try {
+      const res = await fetch(`${this.getEffectiveUrl()}/object_info/KSampler`);
+      if (!res.ok) return [];
+      const data = (await res.json()) as Record<string, unknown>;
+      const node = data.KSampler as { input?: { required?: { scheduler?: unknown } } } | undefined;
+      return ComfyUIAdapter.extractOptions(node?.input?.required?.scheduler);
+    } catch {
+      return [];
+    }
+  }
+
+  /** 查询 ComfyUI 可用的 sampler 列表 */
+  async getSamplers(): Promise<string[]> {
+    try {
+      const res = await fetch(`${this.getEffectiveUrl()}/object_info/KSampler`);
+      if (!res.ok) return [];
+      const data = (await res.json()) as Record<string, unknown>;
+      const node = data.KSampler as { input?: { required?: { sampler_name?: unknown } } } | undefined;
+      return ComfyUIAdapter.extractOptions(node?.input?.required?.sampler_name);
+    } catch {
+      return [];
+    }
+  }
+
   private buildBuiltinWorkflow(request: ImageGenerationRequest): Record<string, unknown> {
     const nodes: Record<string, unknown> = {};
     let nextId = 1;
@@ -253,6 +308,8 @@ export class ComfyUIAdapter implements ImageAdapter {
       }
     };
 
+    const scheduler = request.scheduler || "exponential";
+
     const samplerId = String(nextId++);
     nodes[samplerId] = {
       class_type: "KSampler",
@@ -265,11 +322,110 @@ export class ComfyUIAdapter implements ImageAdapter {
         steps: request.steps || 30,
         cfg: request.cfgScale || 7,
         sampler_name: request.sampler || "euler",
-        scheduler: "normal",
+        scheduler,
         denoise: 1
       }
     };
 
+    // --- Hires Fix ---
+    const hires = request.hires;
+    if (hires?.enabled && hires.upscaler) {
+      // First pass decode
+      const firstDecodeId = String(nextId++);
+      nodes[firstDecodeId] = {
+        class_type: "VAEDecode",
+        inputs: {
+          samples: [samplerId, 0],
+          vae: vaeOutput
+        }
+      };
+
+      // Load upscale model
+      const upscaleModelLoaderId = String(nextId++);
+      nodes[upscaleModelLoaderId] = {
+        class_type: "UpscaleModelLoader",
+        inputs: {
+          model_name: hires.upscaler
+        }
+      };
+
+      // Upscale with model (e.g. 4x-UltraSharp)
+      const upscaleWithModelId = String(nextId++);
+      nodes[upscaleWithModelId] = {
+        class_type: "ImageUpscaleWithModel",
+        inputs: {
+          upscale_model: [upscaleModelLoaderId, 0],
+          image: [firstDecodeId, 0]
+        }
+      };
+
+      // Scale back to target resolution (upscale model outputs at its native multiplier)
+      const targetWidth = Math.round(request.width * (hires.upscale ?? 1.5));
+      const targetHeight = Math.round(request.height * (hires.upscale ?? 1.5));
+      const imageScaleId = String(nextId++);
+      nodes[imageScaleId] = {
+        class_type: "ImageScale",
+        inputs: {
+          image: [upscaleWithModelId, 0],
+          upscale_method: "lanczos",
+          width: targetWidth,
+          height: targetHeight,
+          crop: "disabled"
+        }
+      };
+
+      // Encode back to latent for second pass
+      const vaeEncodeId = String(nextId++);
+      nodes[vaeEncodeId] = {
+        class_type: "VAEEncode",
+        inputs: {
+          pixels: [imageScaleId, 0],
+          vae: vaeOutput
+        }
+      };
+
+      // Second pass KSampler (low denoise for refinement)
+      const hiresSamplerId = String(nextId++);
+      nodes[hiresSamplerId] = {
+        class_type: "KSampler",
+        inputs: {
+          model: modelOutput,
+          positive: [positiveId, 0],
+          negative: [negativeId, 0],
+          latent_image: [vaeEncodeId, 0],
+          seed: request.seed,
+          steps: hires.steps ?? 10,
+          cfg: hires.cfgScale ?? request.cfgScale ?? 7,
+          sampler_name: request.sampler || "euler",
+          scheduler,
+          denoise: hires.denoise ?? 0.3
+        }
+      };
+
+      // Final decode
+      const finalDecodeId = String(nextId++);
+      nodes[finalDecodeId] = {
+        class_type: "VAEDecode",
+        inputs: {
+          samples: [hiresSamplerId, 0],
+          vae: vaeOutput
+        }
+      };
+
+      // Save
+      const saveId = String(nextId++);
+      nodes[saveId] = {
+        class_type: "SaveImage",
+        inputs: {
+          images: [finalDecodeId, 0],
+          filename_prefix: "storyforge_hires"
+        }
+      };
+
+      return nodes;
+    }
+
+    // --- No Hires Fix: simple decode + save ---
     const decodeId = String(nextId++);
     nodes[decodeId] = {
       class_type: "VAEDecode",

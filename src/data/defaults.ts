@@ -227,6 +227,7 @@ export function createDefaultRenderPreset(): RenderPreset {
     defaults: {
       checkpoint: "",
       sampler: "euler",
+      scheduler: "exponential",
       steps: 30,
       cfgScale: 7,
       clipSkip: 2,
@@ -237,7 +238,9 @@ export function createDefaultRenderPreset(): RenderPreset {
       enabled: false,
       steps: 40,
       upscale: 1.5,
-      denoise: 0.4
+      denoise: 0.4,
+      upscaler: "",
+      cfgScale: 7
     },
     adetailer: {
       enabled: false

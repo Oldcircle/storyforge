@@ -57,7 +57,7 @@ export const useGenerationStore = create<GenerationStore>((set, get) => ({
     shot,
     characters,
     sceneBook,
-    preset,
+    preset: _preset,
     renderPreset,
     workflowTemplate,
     promptMode
@@ -141,7 +141,9 @@ export const useGenerationStore = create<GenerationStore>((set, get) => ({
         steps: assembled.steps,
         cfgScale: assembled.cfgScale,
         sampler: assembled.sampler,
+        scheduler: assembled.scheduler,
         clipSkip: assembled.clipSkip,
+        hires: assembled.hires,
         workflowTemplate,
         workflowTemplateVersion
       });

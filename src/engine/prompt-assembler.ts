@@ -170,11 +170,20 @@ export interface RenderPlan {
   seed?: number;
   checkpoint: string;
   sampler: string;
+  scheduler: string;
   width: number;
   height: number;
   steps: number;
   cfgScale: number;
   clipSkip?: number;
+  hires?: {
+    enabled: boolean;
+    steps?: number;
+    upscale?: number;
+    denoise?: number;
+    upscaler?: string;
+    cfgScale?: number;
+  };
 }
 
 // ---------------------------------------------------------------------------
@@ -339,11 +348,13 @@ export function compileRenderPlan(
         .find((v) => typeof v === "number"),
       checkpoint: rp?.checkpoint || "",
       sampler: rp?.sampler || "euler",
+      scheduler: rp?.scheduler || "exponential",
       width: rp?.width ?? 1024,
       height: rp?.height ?? 576,
       steps: rp?.steps ?? 30,
       cfgScale: rp?.cfgScale ?? 7,
-      clipSkip: rp?.clipSkip
+      clipSkip: rp?.clipSkip,
+      hires: renderPreset?.hires
     };
   }
 
@@ -351,7 +362,7 @@ export function compileRenderPlan(
   // rules / llm-assisted modes (existing logic)
   // ---------------------------------------------------------------------------
 
-  const isLLMAssisted = promptMode === "llm-assisted" && shot.visualIntent != null;
+  const isLLMAssisted = promptMode === "llm-assisted" && shot.visualIntent !== null && shot.visualIntent !== undefined;
   const vi = isLLMAssisted ? shot.visualIntent as VisualIntent : undefined;
 
   // --- Quality prefix from RenderPreset ---
@@ -509,11 +520,13 @@ export function compileRenderPlan(
       .find((v) => typeof v === "number"),
     checkpoint: rp?.checkpoint || "",
     sampler: rp?.sampler || "euler",
+    scheduler: rp?.scheduler || "exponential",
     width: rp?.width ?? 1024,
     height: rp?.height ?? 576,
     steps: rp?.steps ?? 30,
     cfgScale: rp?.cfgScale ?? 7,
-    clipSkip: rp?.clipSkip
+    clipSkip: rp?.clipSkip,
+    hires: renderPreset?.hires
   };
 }
 

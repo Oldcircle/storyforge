@@ -23,6 +23,7 @@ export interface RenderPreset {
   defaults: {
     checkpoint: string;
     sampler: string;
+    scheduler?: string;
     steps: number;
     cfgScale: number;
     clipSkip?: number;
@@ -36,6 +37,8 @@ export interface RenderPreset {
     steps?: number;
     upscale?: number;
     denoise?: number;
+    upscaler?: string;
+    cfgScale?: number;
   };
 
   /** ADetailer face/hand fix. */

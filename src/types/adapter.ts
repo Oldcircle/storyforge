@@ -58,8 +58,17 @@ export interface ImageGenerationRequest {
   steps?: number;
   cfgScale?: number;
   sampler?: string;
+  scheduler?: string;
   checkpoint?: string;
   clipSkip?: number;
+  hires?: {
+    enabled: boolean;
+    steps?: number;
+    upscale?: number;
+    denoise?: number;
+    upscaler?: string;
+    cfgScale?: number;
+  };
   workflowTemplate?: WorkflowTemplate;
   workflowTemplateVersion?: string;
 }

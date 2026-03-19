@@ -16,6 +16,7 @@ type DraftPreset = {
   negativePrompt: string;
   checkpoint: string;
   sampler: string;
+  scheduler: string;
   steps: number;
   cfgScale: number;
   clipSkip: number;
@@ -25,6 +26,8 @@ type DraftPreset = {
   hiresSteps: number;
   hiresUpscale: number;
   hiresDenoise: number;
+  hiresUpscaler: string;
+  hiresCfgScale: number;
   promptWriterPrompt: string;
 };
 
@@ -36,6 +39,7 @@ function toDraft(preset: RenderPreset): DraftPreset {
     negativePrompt: preset.negativePrompt.join(", "),
     checkpoint: preset.defaults.checkpoint || "",
     sampler: preset.defaults.sampler || "euler",
+    scheduler: preset.defaults.scheduler || "exponential",
     steps: preset.defaults.steps,
     cfgScale: preset.defaults.cfgScale,
     clipSkip: preset.defaults.clipSkip ?? 2,
@@ -45,6 +49,8 @@ function toDraft(preset: RenderPreset): DraftPreset {
     hiresSteps: preset.hires?.steps ?? 40,
     hiresUpscale: preset.hires?.upscale ?? 1.5,
     hiresDenoise: preset.hires?.denoise ?? 0.4,
+    hiresUpscaler: preset.hires?.upscaler ?? "",
+    hiresCfgScale: preset.hires?.cfgScale ?? preset.defaults.cfgScale,
     promptWriterPrompt: preset.promptWriterPrompt ?? DEFAULT_PROMPT_WRITER_PROMPT
   };
 }
@@ -63,6 +69,9 @@ export function RenderPresetEditorPage() {
   const loadAll = useRenderPresetStore((s) => s.loadAll);
   const [draft, setDraft] = useState<DraftPreset | null>(null);
   const [checkpoints, setCheckpoints] = useState<string[]>([]);
+  const [schedulers, setSchedulers] = useState<string[]>([]);
+  const [samplers, setSamplers] = useState<string[]>([]);
+  const [upscaleModels, setUpscaleModels] = useState<string[]>([]);
   const comfyuiUrl = useSettingsStore((s) => s.settings.comfyuiUrl);
   const importFileRef = useRef<HTMLInputElement>(null);
 
@@ -72,10 +81,11 @@ export function RenderPresetEditorPage() {
     try {
       const text = await file.text();
       const preset = importRenderPreset(text);
-      await db.renderPresets.add(preset);
+      await db.renderPresets.put(preset);
       await loadAll();
-      void selectPreset(preset.id);
+      await selectPreset(preset.id);
     } catch (error) {
+      console.error("渲染预设导入失败:", error);
       window.alert(`导入失败：${error instanceof Error ? error.message : String(error)}`);
     }
     if (importFileRef.current) importFileRef.current.value = "";
@@ -92,6 +102,9 @@ export function RenderPresetEditorPage() {
   useEffect(() => {
     const adapter = new ComfyUIAdapter(comfyuiUrl);
     void adapter.getCheckpoints().then(setCheckpoints);
+    void adapter.getSchedulers().then(setSchedulers);
+    void adapter.getSamplers().then(setSamplers);
+    void adapter.getUpscaleModels().then(setUpscaleModels);
   }, [comfyuiUrl]);
 
   const handleSave = async () => {
@@ -104,6 +117,7 @@ export function RenderPresetEditorPage() {
       defaults: {
         checkpoint: draft.checkpoint,
         sampler: draft.sampler,
+        scheduler: draft.scheduler,
         steps: draft.steps,
         cfgScale: draft.cfgScale,
         clipSkip: draft.clipSkip,
@@ -114,7 +128,9 @@ export function RenderPresetEditorPage() {
         enabled: draft.hiresEnabled,
         steps: draft.hiresSteps,
         upscale: draft.hiresUpscale,
-        denoise: draft.hiresDenoise
+        denoise: draft.hiresDenoise,
+        upscaler: draft.hiresUpscaler,
+        cfgScale: draft.hiresCfgScale
       },
       promptWriterPrompt: draft.promptWriterPrompt.trim() || undefined
     });
@@ -263,11 +279,44 @@ export function RenderPresetEditorPage() {
                   )}
                 </Field>
                 <Field label="Sampler">
-                  <input
-                    className="w-full rounded-2xl border border-stroke bg-bg-secondary px-4 py-3 text-sm text-text-primary outline-none transition focus:border-accent-blue"
-                    value={draft.sampler}
-                    onChange={(e) => setDraft({ ...draft, sampler: e.target.value })}
-                  />
+                  {samplers.length > 0 ? (
+                    <select
+                      className="w-full rounded-2xl border border-stroke bg-bg-secondary px-4 py-3 text-sm text-text-primary outline-none transition focus:border-accent-blue"
+                      value={draft.sampler}
+                      onChange={(e) => setDraft({ ...draft, sampler: e.target.value })}
+                    >
+                      {samplers.map((s) => (
+                        <option key={s} value={s}>{s}</option>
+                      ))}
+                    </select>
+                  ) : (
+                    <input
+                      className="w-full rounded-2xl border border-stroke bg-bg-secondary px-4 py-3 text-sm text-text-primary outline-none transition focus:border-accent-blue"
+                      value={draft.sampler}
+                      placeholder="无法连接 ComfyUI，手动输入"
+                      onChange={(e) => setDraft({ ...draft, sampler: e.target.value })}
+                    />
+                  )}
+                </Field>
+                <Field label="Scheduler">
+                  {schedulers.length > 0 ? (
+                    <select
+                      className="w-full rounded-2xl border border-stroke bg-bg-secondary px-4 py-3 text-sm text-text-primary outline-none transition focus:border-accent-blue"
+                      value={draft.scheduler}
+                      onChange={(e) => setDraft({ ...draft, scheduler: e.target.value })}
+                    >
+                      {schedulers.map((s) => (
+                        <option key={s} value={s}>{s}</option>
+                      ))}
+                    </select>
+                  ) : (
+                    <input
+                      className="w-full rounded-2xl border border-stroke bg-bg-secondary px-4 py-3 text-sm text-text-primary outline-none transition focus:border-accent-blue"
+                      value={draft.scheduler}
+                      placeholder="exponential"
+                      onChange={(e) => setDraft({ ...draft, scheduler: e.target.value })}
+                    />
+                  )}
                 </Field>
                 <Field label="Steps">
                   <input
@@ -325,33 +374,65 @@ export function RenderPresetEditorPage() {
                 Hi-Res Fix
               </label>
               {draft.hiresEnabled && (
-                <div className="grid gap-4 md:grid-cols-3">
-                  <Field label="Steps">
-                    <input
-                      className="w-full rounded-2xl border border-stroke bg-bg-secondary px-4 py-3 text-sm text-text-primary outline-none transition focus:border-accent-blue"
-                      type="number"
-                      value={draft.hiresSteps}
-                      onChange={(e) => setDraft({ ...draft, hiresSteps: Number(e.target.value) || 0 })}
-                    />
+                <div className="space-y-4">
+                  <Field label="Upscaler 模型" hint="从 ComfyUI 获取可用上采样模型（如 4x-UltraSharp）">
+                    {upscaleModels.length > 0 ? (
+                      <select
+                        className="w-full rounded-2xl border border-stroke bg-bg-secondary px-4 py-3 text-sm text-text-primary outline-none transition focus:border-accent-blue"
+                        value={draft.hiresUpscaler}
+                        onChange={(e) => setDraft({ ...draft, hiresUpscaler: e.target.value })}
+                      >
+                        <option value="">（未选择 — Hires Fix 不会生效）</option>
+                        {upscaleModels.map((m) => (
+                          <option key={m} value={m}>{m}</option>
+                        ))}
+                      </select>
+                    ) : (
+                      <input
+                        className="w-full rounded-2xl border border-stroke bg-bg-secondary px-4 py-3 text-sm text-text-primary outline-none transition focus:border-accent-blue"
+                        value={draft.hiresUpscaler}
+                        placeholder="无法连接 ComfyUI，手动输入（如 4x-UltraSharp.pth）"
+                        onChange={(e) => setDraft({ ...draft, hiresUpscaler: e.target.value })}
+                      />
+                    )}
                   </Field>
-                  <Field label="Upscale">
-                    <input
-                      className="w-full rounded-2xl border border-stroke bg-bg-secondary px-4 py-3 text-sm text-text-primary outline-none transition focus:border-accent-blue"
-                      type="number"
-                      step="0.1"
-                      value={draft.hiresUpscale}
-                      onChange={(e) => setDraft({ ...draft, hiresUpscale: Number(e.target.value) || 0 })}
-                    />
-                  </Field>
-                  <Field label="Denoise">
-                    <input
-                      className="w-full rounded-2xl border border-stroke bg-bg-secondary px-4 py-3 text-sm text-text-primary outline-none transition focus:border-accent-blue"
-                      type="number"
-                      step="0.05"
-                      value={draft.hiresDenoise}
-                      onChange={(e) => setDraft({ ...draft, hiresDenoise: Number(e.target.value) || 0 })}
-                    />
-                  </Field>
+                  <div className="grid gap-4 md:grid-cols-4">
+                    <Field label="Steps">
+                      <input
+                        className="w-full rounded-2xl border border-stroke bg-bg-secondary px-4 py-3 text-sm text-text-primary outline-none transition focus:border-accent-blue"
+                        type="number"
+                        value={draft.hiresSteps}
+                        onChange={(e) => setDraft({ ...draft, hiresSteps: Number(e.target.value) || 0 })}
+                      />
+                    </Field>
+                    <Field label="Upscale 倍数">
+                      <input
+                        className="w-full rounded-2xl border border-stroke bg-bg-secondary px-4 py-3 text-sm text-text-primary outline-none transition focus:border-accent-blue"
+                        type="number"
+                        step="0.1"
+                        value={draft.hiresUpscale}
+                        onChange={(e) => setDraft({ ...draft, hiresUpscale: Number(e.target.value) || 0 })}
+                      />
+                    </Field>
+                    <Field label="Denoise">
+                      <input
+                        className="w-full rounded-2xl border border-stroke bg-bg-secondary px-4 py-3 text-sm text-text-primary outline-none transition focus:border-accent-blue"
+                        type="number"
+                        step="0.05"
+                        value={draft.hiresDenoise}
+                        onChange={(e) => setDraft({ ...draft, hiresDenoise: Number(e.target.value) || 0 })}
+                      />
+                    </Field>
+                    <Field label="CFG Scale">
+                      <input
+                        className="w-full rounded-2xl border border-stroke bg-bg-secondary px-4 py-3 text-sm text-text-primary outline-none transition focus:border-accent-blue"
+                        type="number"
+                        step="0.1"
+                        value={draft.hiresCfgScale}
+                        onChange={(e) => setDraft({ ...draft, hiresCfgScale: Number(e.target.value) || 0 })}
+                      />
+                    </Field>
+                  </div>
                 </div>
               )}
             </div>
